@@ -144,7 +144,11 @@
     document.querySelectorAll('.screen').forEach(s => s.classList.toggle('active', s.id === id));
     if (menuRaf) { cancelAnimationFrame(menuRaf); menuRaf = 0; }
     if (wardrobeRaf) { cancelAnimationFrame(wardrobeRaf); wardrobeRaf = 0; }
-    if (id === 'screen-menu') startMenuLoop();
+    if (id === 'screen-menu') {
+      startMenuLoop();
+      const outfit = currentOutfit();
+      $('menu-place').textContent = `第一站 · 中国 · 当前穿搭：${outfit.name} · v20`;
+    }
     if (id === 'screen-wardrobe') startWardrobeLoop();
     if (id === 'screen-map') renderMap();
     if (id === 'screen-levels') renderLevels();
@@ -958,6 +962,18 @@
 
   /* ---------------- 启动 ---------------- */
   function boot() {
+    // 版本检查：避免浏览器一直用旧缓存
+    fetch(`version.json?t=${Date.now()}`, { cache: 'no-store' })
+      .then(r => r.json())
+      .then(v => {
+        if (v.version && String(v.version) !== '20') {
+          const u = new URL(location.href);
+          u.searchParams.set('v', v.version);
+          location.replace(u.toString());
+        }
+      })
+      .catch(() => {});
+
     // loading 小熊
     const lb = $('loading-bears');
     const c = document.createElement('canvas');

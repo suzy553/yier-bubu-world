@@ -196,11 +196,11 @@ const GAME = (() => {
       damageBuffMult: 1
     };
 
-    if (bgImage && bgImage.src.endsWith(level.chapter === '中国' ? 'cn.jpg' : 'cn.jpg')) {
+    if (bgImage && bgImage.src.includes('cn.jpg')) {
       S.bgImg = bgImage;
     } else {
       bgImage = new Image();
-      bgImage.src = 'assets/cn.jpg';
+      bgImage.src = 'assets/cn.jpg?v=20';
       bgImage.onload = () => { if (S) S.bgImg = bgImage; };
       S.bgImg = bgImage;
     }

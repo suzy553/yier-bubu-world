@@ -6,6 +6,7 @@ const ART = (() => {
   const BROWN = '#c98e63';
   const BROWN_DARK = '#7a4a33';
   const BLUSH = 'rgba(247,150,160,.55)';
+  const ASSET_V = '20';
 
   // 豆包生成的角色素材（白底贴纸卡，按服装分目录）
   const OUTFIT_IDS = ['travel', 'cn', 'jp', 'fr', 'gb', 'au', 'gr', 'world'];
@@ -17,7 +18,7 @@ const ART = (() => {
       const img = new Image();
       img.onload = () => { bucket[key] = img; resolve(img); };
       img.onerror = () => resolve(null);
-      img.src = src;
+      img.src = src + (src.includes('?') ? '' : `?v=${ASSET_V}`);
     });
   }
   const travelPromises = [];
