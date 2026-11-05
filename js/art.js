@@ -24,6 +24,10 @@ const ART = (() => {
     loadSprite(`assets/bears/yier-head-${id}.png`, heads.yier, id);
     loadSprite(`assets/bears/bubu-head-${id}.png`, heads.bubu, id);
   }
+  const monsterSprites = {};
+  for (const id of ['fuzz', 'dango', 'can', 'pudding', 'boss']) {
+    loadSprite(`assets/monsters/${id}.png`, monsterSprites, id);
+  }
 
 
   function circle(ctx, x, y, r, fill, stroke = INK, lw = 5) {
@@ -691,6 +695,20 @@ const ART = (() => {
   }
 
   /* ---------------- 怪物 ---------------- */
+  function drawEnemyStatus(ctx, e, opts) {
+    if (opts.slow) {
+      ctx.globalAlpha = .35; ctx.fillStyle = '#8ecae6';
+      circle(ctx, 0, -e.radius - 10, 5, '#8ecae6', null, 0);
+      ctx.globalAlpha = 1;
+    }
+    if (opts.stun) {
+      for (let i = 0; i < 3; i++) {
+        const a = (opts.t || 0) * 4 + i * Math.PI * 2 / 3;
+        star(ctx, Math.cos(a) * 14, -e.radius - 16 + Math.sin(a) * 4, 4, '#f6cf6d', INK, 1);
+      }
+    }
+  }
+
   function drawEnemy(ctx, x, y, s, type, opts = {}) {
     const e = ENEMIES[type] || ENEMIES.fuzz;
     ctx.save();
@@ -701,6 +719,21 @@ const ART = (() => {
     // 影子
     ctx.save(); ctx.globalAlpha = .16; ctx.fillStyle = '#3b241c';
     ctx.beginPath(); ctx.ellipse(0, 16, e.radius * 0.9, 7, 0, 0, Math.PI * 2); ctx.fill(); ctx.restore();
+
+    // 豆包生成的小怪兽贴图
+    const sprite = type === 'mini' ? monsterSprites.pudding : monsterSprites[type];
+    if (sprite && sprite.complete && sprite.naturalWidth) {
+      const h = type === 'boss' ? 104 : type === 'mini' ? 26 : e.radius * 2.5;
+      const w = h * sprite.naturalWidth / sprite.naturalHeight;
+      const wobble = Math.sin((opts.t || 0) * 5) * .03;
+      ctx.save();
+      ctx.rotate(wobble);
+      ctx.drawImage(sprite, -w / 2, 16 - h, w, h);
+      ctx.restore();
+      drawEnemyStatus(ctx, e, opts);
+      ctx.restore();
+      return;
+    }
 
     if (type === 'fuzz' || type === 'mini') {
       const r = type === 'mini' ? 13 : 18;
@@ -782,17 +815,7 @@ const ART = (() => {
     }
 
     // 状态
-    if (opts.slow) {
-      ctx.globalAlpha = .35; ctx.fillStyle = '#8ecae6';
-      circle(ctx, 0, -e.radius - 10, 5, '#8ecae6', null, 0);
-      ctx.globalAlpha = 1;
-    }
-    if (opts.stun) {
-      for (let i = 0; i < 3; i++) {
-        const a = (opts.t || 0) * 4 + i * Math.PI * 2 / 3;
-        star(ctx, Math.cos(a) * 14, -e.radius - 16 + Math.sin(a) * 4, 4, '#f6cf6d', INK, 1);
-      }
-    }
+    drawEnemyStatus(ctx, e, opts);
     ctx.restore();
   }
 

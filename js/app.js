@@ -424,7 +424,7 @@
       canvas.width = 56 * dpr; canvas.height = 56 * dpr;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       ctx.clearRect(0, 0, 56, 56);
-      ART.drawEnemy(ctx, 28, 44, types[i] === 'boss' ? .45 : .75, types[i], {});
+      ART.drawEnemy(ctx, 28, 40, types[i] === 'boss' ? .42 : .9, types[i], {});
     });
   }
 

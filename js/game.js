@@ -599,7 +599,7 @@ const GAME = (() => {
       if (!e.dead && e.hp < e.maxHp) {
         const w = e.boss ? 92 : 42;
         const h = e.boss ? 8 : 5;
-        const y = e.y - (e.boss ? 74 : 38);
+        const y = e.y - (e.boss ? 118 : 48);
         ctx.fillStyle = 'rgba(42,24,18,.35)';
         ctx.beginPath(); ctx.roundRect(e.x - w / 2, y, w, h, 3); ctx.fill();
         const pct = clamp(e.hp / e.maxHp, 0, 1);
