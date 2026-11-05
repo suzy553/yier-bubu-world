@@ -6,7 +6,7 @@ const ART = (() => {
   const BROWN = '#c98e63';
   const BROWN_DARK = '#7a4a33';
   const BLUSH = 'rgba(247,150,160,.55)';
-  const ASSET_V = '20';
+  const ASSET_V = '21';
 
   // 豆包生成的角色素材（白底贴纸卡，按服装分目录）
   const OUTFIT_IDS = ['travel', 'cn', 'jp', 'fr', 'gb', 'au', 'gr', 'world'];
@@ -22,6 +22,7 @@ const ART = (() => {
     });
   }
   const travelPromises = [];
+  const outfitPromises = {};
   for (const id of OUTFIT_IDS) {
     const ps = [
       loadSprite(`assets/bears/yier-${id}.png`, sprites.yier, id),
@@ -30,6 +31,7 @@ const ART = (() => {
       loadSprite(`assets/bears/yier-head-${id}.png`, heads.yier, id),
       loadSprite(`assets/bears/bubu-head-${id}.png`, heads.bubu, id)
     ];
+    outfitPromises[id] = ps;
     if (id === 'travel') travelPromises.push(ps[0], ps[1], ps[2]);
   }
   function whenTravelReady(cb) {
@@ -37,6 +39,17 @@ const ART = (() => {
       Promise.all(travelPromises),
       new Promise(resolve => setTimeout(resolve, 2500))
     ]).then(cb);
+  }
+  function whenOutfitReady(id, cb) {
+    const ps = (outfitPromises[id] || outfitPromises.travel || []).slice(0, 2);
+    Promise.race([
+      Promise.all(ps),
+      new Promise(resolve => setTimeout(resolve, 3000))
+    ]).then(cb);
+  }
+  function isOutfitReady(id) {
+    return !!(sprites.yier[id] && sprites.yier[id].complete && sprites.yier[id].naturalWidth &&
+              sprites.bubu[id] && sprites.bubu[id].complete && sprites.bubu[id].naturalWidth);
   }
   const monsterSprites = {};
   for (const id of ['fuzz', 'dango', 'can', 'pudding', 'boss', 'shield', 'healer']) {
@@ -1128,7 +1141,7 @@ const ART = (() => {
   return {
     INK, WHITE, BROWN,
     circle, ellipse, rr, capsule, poly, star, heart, coin, paw,
-    drawBear, drawHead, whenTravelReady, drawSeagull, drawTower, drawProp, drawEnemy,
+    drawBear, drawHead, whenTravelReady, whenOutfitReady, isOutfitReady, drawSeagull, drawTower, drawProp, drawEnemy,
     drawBackground, drawPath, drawMiniPath, drawSlot, drawBase, drawLandmark,
     drawCoinPop, drawHit, drawLeaf
   };

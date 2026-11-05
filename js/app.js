@@ -145,9 +145,11 @@
     if (menuRaf) { cancelAnimationFrame(menuRaf); menuRaf = 0; }
     if (wardrobeRaf) { cancelAnimationFrame(wardrobeRaf); wardrobeRaf = 0; }
     if (id === 'screen-menu') {
-      startMenuLoop();
       const outfit = currentOutfit();
-      $('menu-place').textContent = `第一站 · 中国 · 当前穿搭：${outfit.name} · v20`;
+      $('menu-place').textContent = `第一站 · 中国 · 当前穿搭：${outfit.name} · v21`;
+      ART.whenOutfitReady(outfit.id, () => {
+        if (currentScreen === 'screen-menu') startMenuLoop();
+      });
     }
     if (id === 'screen-wardrobe') startWardrobeLoop();
     if (id === 'screen-map') renderMap();
@@ -216,6 +218,10 @@
       ctx.beginPath(); ctx.ellipse(440, 50, 44, 13, 0, 0, Math.PI * 2); ctx.fill();
       ctx.restore();
       ART.drawSeagull(ctx, 424, 92, .48, {});
+      if (!ART.isOutfitReady(outfit.id)) {
+        menuRaf = requestAnimationFrame(tick);
+        return;
+      }
       ART.drawBear(ctx, 196, 302, .94, {
         who: 'yier', outfit, expression: 'happy', bob: Math.sin(menuT * 2) * 3
       });
@@ -966,10 +972,9 @@
     fetch(`version.json?t=${Date.now()}`, { cache: 'no-store' })
       .then(r => r.json())
       .then(v => {
-        if (v.version && String(v.version) !== '20') {
-          const u = new URL(location.href);
-          u.searchParams.set('v', v.version);
-          location.replace(u.toString());
+        if (v.version && String(v.version) !== '21') {
+          const target = `v${v.version}.html`;
+          if (!location.pathname.endsWith(target)) location.replace(target);
         }
       })
       .catch(() => {});
@@ -993,8 +998,10 @@
     }
     function drawLoadingBears() {
       ctx.clearRect(0, 0, 220, 150);
-      ART.drawBear(ctx, 80, 140, .55, { who: 'yier', outfit: OUTFITS[0], expression: 'happy' });
-      ART.drawBear(ctx, 150, 140, .55, { who: 'bubu', outfit: OUTFITS[0], expression: 'happy' });
+      const outfit = currentOutfit();
+      if (!ART.isOutfitReady(outfit.id)) return;
+      ART.drawBear(ctx, 80, 140, .55, { who: 'yier', outfit, expression: 'happy' });
+      ART.drawBear(ctx, 150, 140, .55, { who: 'bubu', outfit, expression: 'happy' });
     }
     drawLoadingPlaceholder();
 
@@ -1005,7 +1012,7 @@
       persist();
     }
 
-    ART.whenTravelReady(() => {
+    ART.whenOutfitReady(currentOutfit().id, () => {
       drawLoadingBears();
       setTimeout(() => {
         show('screen-menu');

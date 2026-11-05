@@ -200,7 +200,7 @@ const GAME = (() => {
       S.bgImg = bgImage;
     } else {
       bgImage = new Image();
-      bgImage.src = 'assets/cn.jpg?v=20';
+      bgImage.src = 'assets/cn.jpg?v=21';
       bgImage.onload = () => { if (S) S.bgImg = bgImage; };
       S.bgImg = bgImage;
     }
