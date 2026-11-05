@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#f7e7cf">
 <link rel="icon" href="data:,">
 <title>一二布布环游世界</title>
-<link rel="stylesheet" href="style.css?v=10">
+<link rel="stylesheet" href="style.css?v=12">
 </head>
 <body>
 <div id="stage">
@@ -36,6 +36,7 @@
         <button class="btn primary big" id="btn-start">开始旅行</button>
         <button class="btn" id="btn-wardrobe">打开衣柜</button>
         <button class="btn ghost" id="btn-journal">旅行手账</button>
+        <button class="btn ghost" id="btn-endless">无尽模式</button>
       </div>
       <div class="menu-foot">
         <span>第一站 · 中国</span>
@@ -86,6 +87,7 @@
       <div class="hud-left">
         <div class="heart-pill" id="hud-lives">❤ 10</div>
         <div class="coin-pill"><span class="coin-dot"></span><b id="hud-coins">150</b></div>
+        <div class="buff-pill" id="buff-pill"></div>
       </div>
       <div class="hud-center">
         <div class="wave-label" id="hud-wave">准备中</div>
@@ -105,6 +107,11 @@
 
     <div class="wave-action" id="wave-action">
       <button class="btn primary" id="btn-wave">开始第 1 波</button>
+    </div>
+
+    <div class="skillbar" id="skillbar">
+      <button class="skill-btn" id="skill-freeze"><span>❄️</span><small>冰冻</small><b class="cd-text"></b></button>
+      <button class="skill-btn" id="skill-bomb"><span>💣</span><small>轰炸</small><b class="cd-text"></b></button>
     </div>
 
     <div class="buildbar" id="buildbar"></div>
@@ -144,6 +151,7 @@
       <div class="result-kicker" id="result-kicker">关卡完成</div>
       <h2 id="result-title">长城脚下</h2>
       <div class="stars" id="result-stars"></div>
+      <div class="result-goals" id="result-goals"></div>
       <canvas id="result-bears" width="420" height="240"></canvas>
       <div class="reward-row">
         <div class="reward"><span class="coin-dot big"></span><b id="result-coins">+120</b><small>熊熊币</small></div>
@@ -215,9 +223,9 @@
   <p>把手机横过来，旅行更舒服</p>
 </div>
 
-<script src="js/data.js?v=10"></script>
-<script src="js/art.js?v=10"></script>
-<script src="js/game.js?v=10"></script>
-<script src="js/app.js?v=10"></script>
+<script src="js/data.js?v=12"></script>
+<script src="js/art.js?v=12"></script>
+<script src="js/game.js?v=12"></script>
+<script src="js/app.js?v=12"></script>
 </body>
 </html>

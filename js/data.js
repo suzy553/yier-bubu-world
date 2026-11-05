@@ -115,6 +115,7 @@ const LEVELS = [
     coins:200, lives:10, towers:['dart'], reward:120, tint:'rgba(255,238,204,.46)',
     props:[
       { type:'chest', x:170, y:560, hp:60, reward:25 },
+      { type:'gift', x:600, y:300, hp:70, reward:0 },
       { type:'luckybag', x:700, y:380, hp:50, reward:20 }
     ],
     tip:'点一个木桩，建一座飞镖塔。'
@@ -132,6 +133,7 @@ const LEVELS = [
     coins:230, lives:10, towers:['dart','sling'], reward:140, tint:'rgba(255,232,196,.44)',
     props:[
       { type:'chest', x:360, y:330, hp:60, reward:25 },
+      { type:'mushroom', x:560, y:380, hp:50, reward:20 },
       { type:'luckybag', x:760, y:380, hp:50, reward:20 }
     ],
     tip:'新塔：弹弓塔。射程远，专门打快跑团子。'
@@ -149,6 +151,7 @@ const LEVELS = [
     coins:320, lives:10, towers:['dart','sling','honey'], reward:160, tint:'rgba(226,238,255,.44)',
     props:[
       { type:'chest', x:200, y:300, hp:70, reward:30 },
+      { type:'gift', x:500, y:300, hp:70, reward:0 },
       { type:'luckybag', x:760, y:380, hp:55, reward:20 }
     ],
     tip:'新塔：蜂蜜罐。先减速，再让飞镖和弹弓慢慢打。'
@@ -166,6 +169,7 @@ const LEVELS = [
     coins:420, lives:10, towers:['dart','sling','honey','camera'], reward:180, tint:'rgba(255,214,170,.44)',
     props:[
       { type:'chest', x:300, y:200, hp:70, reward:30 },
+      { type:'mushroom', x:600, y:380, hp:50, reward:20 },
       { type:'luckybag', x:800, y:380, hp:55, reward:20 }
     ],
     tip:'新塔：拍立得。闪光能眩晕一片，布丁分裂也不怕。'
@@ -182,7 +186,8 @@ const LEVELS = [
     coins:400, lives:12, towers:['dart','sling','honey','camera'], reward:300, tint:'rgba(255,196,150,.48)', boss:true,
     props:[
       { type:'chest', x:300, y:300, hp:80, reward:35 },
-      { type:'luckybag', x:860, y:300, hp:60, reward:25 },
+      { type:'gift', x:680, y:300, hp:80, reward:0 },
+      { type:'mushroom', x:860, y:300, hp:55, reward:25 },
       { type:'chest', x:1100, y:480, hp:80, reward:35 }
     ],
     tip:'灯笼大魔王来了！把四种塔都用上，别让它走到房车。'

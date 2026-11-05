@@ -66,6 +66,7 @@ const GAME = (() => {
 
   function pointer(x, y) {
     if (!S) return;
+    if (S.aiming === 'bomb') { useSkill('bomb', x, y); return; }
     let best = null, bestD = 9999;
     for (const slot of S.slots) {
       const d = Math.hypot(slot.x - x, slot.y - y);
@@ -104,6 +105,9 @@ const GAME = (() => {
     S = {
       level,
       path,
+      endless: !!level.endless,
+      waves: level.waves ? level.waves.slice() : [],
+      waveHpScale: 1,
       slots: level.slots.map(([x, y]) => ({ x, y, tower: null })),
       towers: [],
       enemies: [],
@@ -132,11 +136,18 @@ const GAME = (() => {
       selectedSlot: null,
       selectedTower: null,
       buildType: null,
+      skills: {
+        freeze: { cd: 0, max: 25 },
+        bomb: { cd: 0, max: 20 }
+      },
+      aiming: null,
       outfit,
       bgImg: null,
       base: path.at(path.total),
       shakeT: 0,
-      bannerT: 0
+      bannerT: 0,
+      damageBuffT: 0,
+      damageBuffMult: 1
     };
 
     if (bgImage && bgImage.src.endsWith(level.chapter === '中国' ? 'cn.jpg' : 'cn.jpg')) {
@@ -248,14 +259,31 @@ const GAME = (() => {
     emit(true);
   }
 
+  function makeEndlessWave(n) {
+    const groups = [{
+      enemy: 'fuzz',
+      count: 8 + n * 2,
+      gap: Math.max(.28, .72 - n * .018)
+    }];
+    if (n % 2 === 1) groups.push({ enemy: 'dango', count: 4 + n, gap: Math.max(.28, .6 - n * .012) });
+    if (n % 3 === 2) groups.push({ enemy: 'can', count: 1 + Math.floor(n / 3), gap: 1.0 });
+    if (n % 4 === 3) groups.push({ enemy: 'pudding', count: 2 + Math.floor(n / 4), gap: .85 });
+    if (n > 0 && n % 5 === 0) groups.push({ enemy: 'boss', count: 1, gap: 1 });
+    return { groups, hpScale: 1 + n * .12, reward: 20 + n * 2 };
+  }
+
   function startWave() {
     if (!S || S.over || S.phase !== 'prepare') return;
-    const wave = S.level.waves[S.waveIndex + 1];
+    if (S.endless) {
+      while (S.waves.length <= S.waveIndex + 1) S.waves.push(makeEndlessWave(S.waves.length));
+    }
+    const wave = S.waves[S.waveIndex + 1];
     if (!wave) return;
     S.waveIndex++;
     S.phase = 'wave';
     S.prepareT = 0;
     S.waveTime = 0;
+    S.waveHpScale = wave.hpScale || 1;
     S.queue = [];
     S.queueIndex = 0;
     let t = 0;
@@ -271,9 +299,46 @@ const GAME = (() => {
     emit(true);
   }
 
+  function useSkill(type, x, y) {
+    if (!S || S.over || S.paused) return;
+    if (type === 'freeze') {
+      const sk = S.skills.freeze;
+      if (sk.cd > 0) { toast(`冰冻还要 ${Math.ceil(sk.cd)} 秒`); return; }
+      sk.cd = sk.max;
+      for (const e of S.enemies) {
+        if (!e.prop && !e.dead) e.stun = Math.max(e.stun, 3);
+      }
+      addEffect('flash', 640, 360, 0, .55);
+      sfx('camera');
+      toast('冰冻！全场暂停 3 秒');
+      S.aiming = null;
+      emit(true);
+      return;
+    }
+    if (type === 'bomb') {
+      const sk = S.skills.bomb;
+      if (sk.cd > 0) { toast(`轰炸还要 ${Math.ceil(sk.cd)} 秒`); return; }
+      if (x === undefined || y === undefined) {
+        S.aiming = 'bomb';
+        emit(true);
+        toast('点地图选择轰炸位置');
+        return;
+      }
+      sk.cd = sk.max;
+      S.aiming = null;
+      for (const e of S.enemies.slice()) {
+        if (!e.dead && !e.prop && dist2(x, y, e.x, e.y) <= 120 * 120) damage(e, 90, 'bomb');
+      }
+      addEffect('flash', x, y, 0, .6, { r: 120 });
+      sfx('camera');
+      toast('轰！');
+      emit(true);
+    }
+  }
+
   function spawnEnemy(type) {
     const def = ENEMIES[type];
-    const hpScale = 1;
+    const hpScale = S.waveHpScale || 1;
     const e = {
       id: Math.random().toString(36).slice(2),
       type,
@@ -328,7 +393,8 @@ const GAME = (() => {
 
   function damage(e, amount, source) {
     if (!e || e.dead) return;
-    const dmg = Math.max(1, amount - (e.armor || 0));
+    const buffed = S.damageBuffT > 0 ? S.damageBuffMult : 1;
+    const dmg = Math.max(1, Math.round(amount * buffed) - (e.armor || 0));
     e.hp -= dmg;
     e.hitT = .12;
     addFloat(e.x + (Math.random() - .5) * 12, e.y - e.radius - 14, String(Math.round(dmg)));
@@ -359,9 +425,17 @@ const GAME = (() => {
     if (e.dead) return;
     e.dead = true;
     if (e.prop) {
-      S.coins += e.reward;
-      addEffect('coin', e.x, e.y - 18, 0, .55);
-      addFloat(e.x, e.y - 30, `+${e.reward} 币`, '#f6cf6d');
+      if (e.type === 'gift') {
+        S.damageBuffT = 15;
+        S.damageBuffMult = 1.3;
+        addEffect('flash', e.x, e.y, 0, .5);
+        addFloat(e.x, e.y - 30, '攻击 +30%', '#f6cf6d');
+        toast('礼物开出攻击 +30%，持续 15 秒！');
+      } else {
+        S.coins += e.reward;
+        addEffect('coin', e.x, e.y - 18, 0, .55);
+        addFloat(e.x, e.y - 30, `+${e.reward} 币`, '#f6cf6d');
+      }
       sfx('coin');
       S.enemies = S.enemies.filter(x => x !== e);
       return;
@@ -402,6 +476,8 @@ const GAME = (() => {
       lives: S.lives,
       maxLives: S.maxLives,
       level: S.level,
+      endless: !!S.endless,
+      wave: S.waveIndex + 1,
       coins: won ? S.level.reward + stars * 30 : 0
     };
     if (won) sfx('win'); else sfx('lose');
@@ -427,6 +503,10 @@ const GAME = (() => {
 
     if (S.bannerT > 0) S.bannerT -= dt;
     if (S.shakeT > 0) S.shakeT -= dt;
+    if (S.damageBuffT > 0) S.damageBuffT = Math.max(0, S.damageBuffT - step);
+    for (const sk of Object.values(S.skills)) {
+      if (sk.cd > 0) sk.cd = Math.max(0, sk.cd - step);
+    }
 
     // 波次：准备倒计时结束自动开下一波，不需要手动点按钮
     if (S.phase === 'prepare') {
@@ -440,7 +520,7 @@ const GAME = (() => {
         S.queueIndex++;
       }
       if (S.queueIndex >= S.queue.length && S.enemies.filter(e => !e.prop).length === 0) {
-        if (S.waveIndex >= S.level.waves.length - 1) {
+        if (!S.endless && S.waveIndex >= S.waves.length - 1) {
           end(true);
         } else {
           S.phase = 'prepare';
@@ -764,9 +844,16 @@ const GAME = (() => {
       lives: S.lives,
       maxLives: S.maxLives,
       wave: S.waveIndex + 1,
-      totalWaves: S.level.waves.length,
+      totalWaves: S.endless ? Math.max(1, S.waveIndex + 1) : S.waves.length,
+      endless: !!S.endless,
       phase: S.phase,
       prepareT: Math.max(0, S.prepareT),
+      damageBuffT: Math.max(0, S.damageBuffT),
+      skills: {
+        freeze: { cd: S.skills.freeze.cd, max: S.skills.freeze.max },
+        bomb: { cd: S.skills.bomb.cd, max: S.skills.bomb.max }
+      },
+      aiming: S.aiming,
       over: S.over,
       paused: S.paused,
       speed: S.speed,
@@ -821,7 +908,7 @@ const GAME = (() => {
 
   return {
     init, start, stop, pause, setSpeed,
-    selectBuild, deselect, upgrade, sell, startWave,
+    selectBuild, deselect, upgrade, sell, startWave, useSkill,
     snapshot, getS, debugBuild, debugClearWave, debugFinish
   };
 })();

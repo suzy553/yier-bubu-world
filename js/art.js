@@ -46,7 +46,7 @@ const ART = (() => {
     loadSprite(`assets/towers/${id}.png`, towerSprites, id);
   }
   const propSprites = {};
-  for (const id of ['chest', 'luckybag']) {
+  for (const id of ['chest', 'luckybag', 'mushroom', 'gift']) {
     loadSprite(`assets/props/${id}.png`, propSprites, id);
   }
 

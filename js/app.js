@@ -12,7 +12,8 @@
   });
   const DEFAULT_SAVE = {
     coins: 0, stars: {}, cleared: [], outfit: 'travel', owned: ['travel'],
-    stampCn: false, sound: true, seenIntro: false, seenCnStart: false, seenCnEnd: false
+    stampCn: false, sound: true, seenIntro: false, seenCnStart: false, seenCnEnd: false,
+    endlessBest: 0
   };
 
   let save = loadSave();
@@ -452,6 +453,14 @@
     });
     buildBuildBar();
     $('wave-action').style.display = 'none';
+    $('skill-freeze').addEventListener('click', () => {
+      GAME.useSkill('freeze');
+      updateHUD(GAME.snapshot());
+    });
+    $('skill-bomb').addEventListener('click', () => {
+      GAME.useSkill('bomb');
+      updateHUD(GAME.snapshot());
+    });
     $('btn-upgrade').addEventListener('click', () => GAME.upgrade());    $('btn-sell').addEventListener('click', () => GAME.sell());
     $('panel-close').addEventListener('click', () => {
       GAME.deselect();
@@ -529,20 +538,41 @@
     $('hud-lives').textContent = `❤ ${s.lives}`;
     $('btn-speed').textContent = `${s.speed}×`;
 
+    const bp = $('buff-pill');
+    if (s.damageBuffT > 0) {
+      bp.style.display = 'inline-flex';
+      bp.textContent = `攻击 +30% · ${Math.ceil(s.damageBuffT)}s`;
+    } else {
+      bp.style.display = 'none';
+    }
+    for (const key of ['freeze', 'bomb']) {
+      const el = $('skill-' + key);
+      const sk = s.skills[key];
+      el.classList.toggle('cooling', sk.cd > 0);
+      el.classList.toggle('aiming', key === 'bomb' && s.aiming === 'bomb');
+      el.querySelector('.cd-text').textContent = sk.cd > 0 ? Math.ceil(sk.cd) + 's' : '';
+    }
+    $('game-canvas').style.cursor = s.aiming === 'bomb' ? 'crosshair' : '';
+
     let waveText = '准备中';
     if (s.over) waveText = s.phase === 'won' ? '通关！' : '失败';
     else if (s.phase === 'prepare') {
       const sec = Math.max(0, Math.ceil(s.prepareT || 0));
       waveText = s.wave === 0 ? `第 1 波 · ${sec}s` : `第 ${s.wave + 1} 波 · ${sec}s`;
-    } else waveText = `第 ${s.wave} / ${s.totalWaves} 波`;
+    } else waveText = s.endless ? `第 ${s.wave} 波 · 无尽` : `第 ${s.wave} / ${s.totalWaves} 波`;
     $('hud-wave').textContent = waveText;
 
     const dots = $('hud-wave-dots');
-    const current = s.phase === 'prepare' ? s.wave : s.wave - 1;
-    dots.innerHTML = Array.from({ length: s.totalWaves }, (_, i) => {
-      const cls = i < current ? 'done' : i === current ? 'now' : '';
-      return `<i class="${cls}"></i>`;
-    }).join('');
+    if (s.endless) {
+      dots.style.display = 'none';
+    } else {
+      dots.style.display = 'flex';
+      const current = s.phase === 'prepare' ? s.wave : s.wave - 1;
+      dots.innerHTML = Array.from({ length: s.totalWaves }, (_, i) => {
+        const cls = i < current ? 'done' : i === current ? 'now' : '';
+        return `<i class="${cls}"></i>`;
+      }).join('');
+    }
 
     // 建造栏
     document.querySelectorAll('.build-card').forEach(el => {
@@ -649,6 +679,31 @@
     clearTimeout(tipTimer);
   }
 
+  function makeEndlessLevel() {
+    const base = LEVELS[4];
+    return {
+      id: 'endless',
+      name: '无尽模式',
+      sub: '看你能撑到第几波',
+      chapter: '中国',
+      path: base.path,
+      slots: base.slots,
+      waves: [],
+      coins: 300,
+      lives: 10,
+      towers: ['dart', 'sling', 'honey', 'camera'],
+      reward: 0,
+      tint: base.tint,
+      endless: true,
+      tip: '无尽模式：每波都会更强，撑得越久越好。'
+    };
+  }
+
+  function startEndless() {
+    Sound.sfx('click');
+    startLevel(makeEndlessLevel());
+  }
+
   function startLevel(level, skipStory) {
     lastLevel = level;
     initGame();
@@ -686,6 +741,10 @@
   }
 
   function handleLose(result) {
+    if (result.endless) {
+      save.endlessBest = Math.max(save.endlessBest || 0, result.wave || 1);
+      persist();
+    }
     showResult(result, false);
   }
 
@@ -699,6 +758,24 @@
     $('result-coins').textContent = won ? `+${result.earned || result.coins}` : '+0';
     $('result-stamp-wrap').style.visibility = (won && result.level.boss) ? 'visible' : 'hidden';
     $('result-stamp').textContent = '中国印章';
+
+    if (result.endless) {
+      $('result-kicker').textContent = `无尽挑战 · 最高第 ${save.endlessBest || 0} 波`;
+      $('result-title').textContent = '无尽模式';
+      $('result-stars').innerHTML = '';
+      $('result-goals').innerHTML =
+        `<span class="result-goal done">撑到第 ${result.wave || 1} 波</span>` +
+        `<span class="result-goal">最高第 ${save.endlessBest || 0} 波</span>`;
+    } else {
+      const goals = [
+        { label: '通关', done: won },
+        { label: '剩余生命 ≥60%', done: won && result.lives >= Math.ceil(result.maxLives * .6) },
+        { label: '不掉血', done: won && result.lives === result.maxLives }
+      ];
+      $('result-goals').innerHTML = goals.map(g =>
+        `<span class="result-goal ${g.done ? 'done' : 'fail'}">${g.done ? '✓' : '×'} ${g.label}</span>`
+      ).join('');
+    }
     const c = $('result-bears');
     const ctx = c.getContext('2d');
     const dpr = Math.min(2, window.devicePixelRatio || 1);
@@ -708,7 +785,7 @@
     const outfit = currentOutfit();
     ART.drawBear(ctx, 135, 220, .82, { who: 'yier', outfit, expression: won ? 'cheer' : 'scared', bob: Math.sin(menuT) * 2 });
     ART.drawBear(ctx, 285, 220, .82, { who: 'bubu', outfit, expression: won ? 'cheer' : 'scared', bob: Math.sin(menuT + 1) * 2 });
-    $('btn-result-next').textContent = won ? '继续' : '再试一次';
+    $('btn-result-next').textContent = result.endless ? '再来一次' : won ? '继续' : '再试一次';
     $('btn-result-replay').style.display = won ? '' : 'none';
     $('btn-result-wardrobe').style.display = won ? '' : 'none';
   }
@@ -808,6 +885,7 @@
     show('screen-journal');
     Sound.sfx('click');
   });
+  $('btn-endless').addEventListener('click', startEndless);
   $('btn-map-back').addEventListener('click', () => show('screen-menu'));
   $('btn-levels-back').addEventListener('click', () => show('screen-map'));
   $('btn-wardrobe-back').addEventListener('click', () => show('screen-menu'));
