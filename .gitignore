@@ -1,0 +1,19 @@
+.env.local
+.env
+node_modules/
+
+# 密钥/证书
+*.key
+*.pem
+
+# 浏览器测试 profile
+.chrome-ai*
+.chrome-*
+
+# 备份/临时文件
+*.bak
+*.tmp
+
+# 费用/用量日志（含本地消费记录）
+art/generated/usage.jsonl
+art/generated/*.json
