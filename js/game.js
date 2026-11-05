@@ -62,36 +62,80 @@ const GAME = (() => {
       const y = (e.clientY - r.top) * (720 / r.height);
       pointer(x, y);
     });
+    canvas.addEventListener('pointermove', e => {
+      if (!S || S.over || S.paused || !S.buildType) { if (S) S.hover = null; return; }
+      const r = canvas.getBoundingClientRect();
+      S.hover = {
+        x: (e.clientX - r.left) * (1280 / r.width),
+        y: (e.clientY - r.top) * (720 / r.height)
+      };
+    });
+    canvas.addEventListener('pointerleave', () => { if (S) S.hover = null; });
+  }
+
+  function pointSegDist(px, py, ax, ay, bx, by) {
+    const dx = bx - ax, dy = by - ay;
+    const len = dx * dx + dy * dy || 1;
+    let t = ((px - ax) * dx + (py - ay) * dy) / len;
+    t = Math.max(0, Math.min(1, t));
+    return Math.hypot(px - (ax + t * dx), py - (ay + t * dy));
+  }
+
+  function distToPath(x, y) {
+    const pts = S.level.path || [];
+    let best = Infinity;
+    for (let i = 0; i < pts.length - 1; i++) {
+      best = Math.min(best, pointSegDist(x, y, pts[i][0], pts[i][1], pts[i + 1][0], pts[i + 1][1]));
+    }
+    return best;
+  }
+
+  function canPlaceAt(x, y) {
+    if (x < 26 || x > 1254 || y < 86 || y > 560) return { ok: false, reason: '这里太靠边了，换个地方吧。' };
+    if (distToPath(x, y) < 48) return { ok: false, reason: '不能建在怪兽走的路上。' };
+    if (Math.hypot(x - S.base.x, y - S.base.y) < 76) return { ok: false, reason: '离景区太近了，往旁边挪一点。' };
+    for (const t of S.towers) {
+      if (Math.hypot(x - t.slot.x, y - t.slot.y) < 44) return { ok: false, reason: '两座塔靠得太近了。' };
+    }
+    for (const e of S.enemies) {
+      if (e.prop && Math.hypot(x - e.x, y - e.y) < Math.max(28, (e.radius || 16) + 10)) return { ok: false, reason: '这里有个道具，换块空地吧。' };
+    }
+    return { ok: true };
+  }
+
+  function tryFreeBuild(x, y) {
+    const check = canPlaceAt(x, y);
+    if (!check.ok) { toast(check.reason); return; }
+    const slot = { x, y, tower: null };
+    buildAt(slot);
+    S.hover = null;
   }
 
   function pointer(x, y) {
     if (!S) return;
     if (S.aiming === 'bomb') { useSkill('bomb', x, y); return; }
-    let best = null, bestD = 9999;
-    for (const slot of S.slots) {
-      const d = Math.hypot(slot.x - x, slot.y - y);
-      if (d < bestD) { bestD = d; best = slot; }
+    // 先找已经建好的塔（包括自由放置的）
+    let tower = null, bestD = 9999;
+    for (const t of S.towers) {
+      const d = Math.hypot(t.slot.x - x, t.slot.y - y);
+      if (d < bestD) { bestD = d; tower = t; }
     }
-    if (best && bestD < 40) {
-      if (best.tower) {
-        S.selectedSlot = best;
-        S.selectedTower = best.tower;
-        S.buildType = null;
-        emit(true);
-      } else if (S.buildType) {
-        buildAt(best);
-      } else {
-        S.selectedSlot = best;
-        S.selectedTower = null;
-        emit(true);
-        toast('先点下面的塔，再点木桩。');
-      }
-    } else {
-      S.selectedSlot = null;
-      S.selectedTower = null;
+    if (tower && bestD < 42) {
+      S.selectedSlot = tower.slot;
+      S.selectedTower = tower;
       S.buildType = null;
+      S.hover = null;
       emit(true);
+      return;
     }
+    if (S.buildType) {
+      tryFreeBuild(x, y);
+      return;
+    }
+    S.selectedSlot = null;
+    S.selectedTower = null;
+    S.hover = null;
+    emit(true);
   }
 
   function toast(msg) {
@@ -108,6 +152,7 @@ const GAME = (() => {
       endless: !!level.endless,
       waves: level.waves ? level.waves.slice() : [],
       waveHpScale: 1,
+      spawnGap: 1.3,
       slots: level.slots.map(([x, y]) => ({ x, y, tower: null })),
       towers: [],
       enemies: [],
@@ -136,6 +181,7 @@ const GAME = (() => {
       selectedSlot: null,
       selectedTower: null,
       buildType: null,
+      hover: null,
       skills: {
         freeze: { cd: 0, max: 25 },
         bomb: { cd: 0, max: 20 }
@@ -302,11 +348,12 @@ const GAME = (() => {
     S.queue = [];
     S.queueIndex = 0;
     let t = 0;
+    const gapScale = S.spawnGap || 1;
     for (const g of wave.groups) {
       for (let i = 0; i < g.count; i++) {
-        S.queue.push({ time: t + i * g.gap, enemy: g.enemy });
+        S.queue.push({ time: t + i * g.gap * gapScale, enemy: g.enemy });
       }
-      t += g.count * g.gap + .9;
+      t += g.count * g.gap * gapScale + .9 * gapScale;
     }
     S.queue.sort((a, b) => a.time - b.time);
     S.bannerT = 1.6;
@@ -388,7 +435,7 @@ const GAME = (() => {
       hp, maxHp: hp,
       speed: 0,
       reward: def.reward || 25,
-      radius: def.type === 'chest' ? 20 : 17,
+      radius: ({ chest: 20, luckybag: 17, mushroom: 16, gift: 17, pavilion: 30, grass: 14, bamboo: 18 })[def.type] || 17,
       armor: 0,
       boss: false,
       split: null,
@@ -742,19 +789,32 @@ const GAME = (() => {
     ctx.beginPath(); ctx.moveTo(0, -50); ctx.lineTo(34, -40); ctx.lineTo(0, -28); ctx.closePath(); ctx.fill(); ctx.stroke();
     ctx.restore();
 
-    // 木桩
-    for (const slot of S.slots) {
-      const highlight = !slot.tower && S.buildType ? '#f2b84b' : (S.selectedSlot === slot ? '#d95d4f' : null);
-      ART.drawSlot(ctx, slot.x, slot.y, { highlight });
+    // 自由建塔预览
+    if (S.buildType && S.hover) {
+      const ok = canPlaceAt(S.hover.x, S.hover.y).ok;
+      const st = TOWERS[S.buildType].levels[0];
+      ctx.save();
+      ctx.beginPath(); ctx.arc(S.hover.x, S.hover.y, st.range, 0, Math.PI * 2);
+      ctx.fillStyle = ok ? 'rgba(143,214,180,.16)' : 'rgba(217,74,61,.12)'; ctx.fill();
+      ctx.strokeStyle = ok ? 'rgba(75,110,80,.55)' : 'rgba(217,74,61,.5)';
+      ctx.lineWidth = 3; ctx.setLineDash([8, 8]); ctx.stroke(); ctx.restore();
+      ctx.save();
+      ctx.globalAlpha = .55;
+      ART.drawTower(ctx, S.hover.x, S.hover.y - 8, .95, S.buildType, 1, { angle: -0.5 });
+      ctx.restore();
     }
 
-    // 基地
-    ART.drawBase(ctx, S.base.x, S.base.y - 10, S.outfit, {
-      bob: Math.sin(S.time * 2) * 2,
-      expression: S.shakeT > 0 ? 'scared' : (S.over && S.phase === 'won' ? 'cheer' : 'normal'),
-      shake: S.shakeT > 0,
-      t: S.time
-    });
+    // 终点景点（中国站用黄鹤楼风格景区，不再放一二布布）
+    if (S.level.chapter === '中国') {
+      ART.drawLandmark(ctx, S.base.x - 8, S.base.y + 2, .95, S.level.chapter, { t: S.time });
+    } else {
+      ART.drawBase(ctx, S.base.x, S.base.y - 10, S.outfit, {
+        bob: Math.sin(S.time * 2) * 2,
+        expression: S.shakeT > 0 ? 'scared' : (S.over && S.phase === 'won' ? 'cheer' : 'normal'),
+        shake: S.shakeT > 0,
+        t: S.time
+      });
+    }
 
     // 塔
     const sortedTowers = S.towers.slice().sort((a, b) => a.slot.y - b.slot.y);

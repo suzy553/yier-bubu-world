@@ -46,8 +46,12 @@ const ART = (() => {
     loadSprite(`assets/towers/${id}.png`, towerSprites, id);
   }
   const propSprites = {};
-  for (const id of ['chest', 'luckybag', 'mushroom', 'gift']) {
+  for (const id of ['chest', 'luckybag', 'mushroom', 'gift', 'pavilion', 'grass', 'bamboo']) {
     loadSprite(`assets/props/${id}.png`, propSprites, id);
+  }
+  const landmarkSprites = {};
+  for (const id of ['china']) {
+    loadSprite(`assets/landmarks/${id}.png`, landmarkSprites, id);
   }
 
 
@@ -736,7 +740,8 @@ const ART = (() => {
   function drawProp(ctx, x, y, s, type, opts = {}) {
     const img = propSprites[type];
     if (!img || !img.complete || !img.naturalWidth) return;
-    const h = type === 'chest' ? 46 : 42;
+    const heights = { chest: 46, luckybag: 42, mushroom: 40, gift: 42, pavilion: 76, grass: 32, bamboo: 50 };
+    const h = heights[type] || 42;
     const w = h * img.naturalWidth / img.naturalHeight;
     const bob = Math.sin((opts.t || 0) * 2 + x * .01) * 1.5;
     ctx.save();
@@ -977,10 +982,6 @@ const ART = (() => {
     trace(); ctx.setLineDash([3, 4]); ctx.strokeStyle = 'rgba(75,43,32,.35)'; ctx.lineWidth = 1.2; ctx.stroke();
     ctx.setLineDash([]);
 
-    // 木桩
-    for (const [x, y] of level.slots || []) {
-      circle(ctx, x * sc + ox, y * sc + oy, 1.8, '#c99a68', INK, .8);
-    }
     // 起点旗
     const s = m[0];
     poly(ctx, [[s[0], s[1] - 5], [s[0] + 7, s[1] - 2], [s[0], s[1] + 2]], '#d94a3d', INK, 1);
@@ -1008,6 +1009,26 @@ const ART = (() => {
       ctx.setLineDash([]);
     }
     ctx.restore();
+  }
+
+  function drawLandmark(ctx, x, y, s, chapter, opts = {}) {
+    const id = chapter === '中国' ? 'china' : '';
+    const img = landmarkSprites[id];
+    if (!img || !img.complete || !img.naturalWidth) return false;
+    const h = 132 * s;
+    const w = h * img.naturalWidth / img.naturalHeight;
+    const bob = Math.sin((opts.t || 0) * 2) * 2;
+    ctx.save();
+    ctx.translate(x, y + bob);
+    ctx.save(); ctx.globalAlpha = .18; ctx.fillStyle = '#3b241c';
+    ctx.beginPath(); ctx.ellipse(0, 18, w * .4, 10, 0, 0, Math.PI * 2); ctx.fill(); ctx.restore();
+    ctx.drawImage(img, -w * .5, 18 - h, w, h);
+    const tw = (Math.sin((opts.t || 0) * 3) + 1) / 2;
+    ctx.globalAlpha = .35 + tw * .45;
+    star(ctx, w * .36, -h * .82, 4, '#f6cf6d', '#8a5a20', 1);
+    star(ctx, -w * .3, -h * .62, 2.6, '#fff8ec', '#8a5a20', .8);
+    ctx.restore();
+    return true;
   }
 
   function drawBase(ctx, x, y, outfit, opts = {}) {
@@ -1107,7 +1128,7 @@ const ART = (() => {
     INK, WHITE, BROWN,
     circle, ellipse, rr, capsule, poly, star, heart, coin, paw,
     drawBear, drawHead, whenTravelReady, drawSeagull, drawTower, drawProp, drawEnemy,
-    drawBackground, drawPath, drawMiniPath, drawSlot, drawBase,
+    drawBackground, drawPath, drawMiniPath, drawSlot, drawBase, drawLandmark,
     drawCoinPop, drawHit, drawLeaf
   };
 })();

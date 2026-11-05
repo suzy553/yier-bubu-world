@@ -23,6 +23,8 @@
   let tipTimer = 0;
   let lastLevel = null;
   let lastResult = null;
+  let journalPreload = false;
+  const JOURNAL_TYPES = ['fuzz', 'dango', 'can', 'pudding', 'shield', 'healer', 'boss'];
 
   if (params.get('fresh') === '1') {
     save = JSON.parse(JSON.stringify(DEFAULT_SAVE));
@@ -435,19 +437,31 @@
       return `<div class="stamp-card ${got ? '' : 'off'}">${got ? '中国<br>印章' : '未收集'}</div>`;
     }).join('');
     const mg = $('monster-grid');
-    const types = ['fuzz', 'dango', 'can', 'pudding', 'shield', 'healer', 'boss'];
+    const types = JOURNAL_TYPES;
     mg.innerHTML = types.map(t => `
       <div class="monster-card">
         <canvas width="56" height="56"></canvas>
         <span>${ENEMIES[t].name}</span>
       </div>`).join('');
+    drawJournalMonsters();
+    if (!journalPreload) {
+      journalPreload = true;
+      setTimeout(() => {
+        if (currentScreen === 'screen-journal') drawJournalMonsters();
+      }, 800);
+    }
+  }
+
+  function drawJournalMonsters() {
+    const mg = $('monster-grid');
+    if (!mg) return;
     mg.querySelectorAll('.monster-card canvas').forEach((canvas, i) => {
       const ctx = canvas.getContext('2d');
       const dpr = Math.min(2, window.devicePixelRatio || 1);
       canvas.width = 56 * dpr; canvas.height = 56 * dpr;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       ctx.clearRect(0, 0, 56, 56);
-      ART.drawEnemy(ctx, 28, 40, types[i] === 'boss' ? .42 : .9, types[i], {});
+      ART.drawEnemy(ctx, 28, 40, JOURNAL_TYPES[i] === 'boss' ? .42 : .9, JOURNAL_TYPES[i], {});
     });
   }
 
@@ -575,7 +589,7 @@
       el.classList.toggle('aiming', key === 'bomb' && s.aiming === 'bomb');
       el.querySelector('.cd-text').textContent = sk.cd > 0 ? Math.ceil(sk.cd) + 's' : '';
     }
-    $('game-canvas').style.cursor = s.aiming === 'bomb' ? 'crosshair' : '';
+    $('game-canvas').style.cursor = s.aiming === 'bomb' || s.buildType ? 'crosshair' : '';
 
     let waveText = '准备中';
     if (s.over) waveText = s.phase === 'won' ? '通关！' : '失败';
@@ -703,11 +717,11 @@
     const built = st.towers.length > 0;
     const upgraded = st.towers.some(t => t.level > 1);
     let text = '';
-    if (!built) text = '点一个木桩，建一座飞镖塔。';
-    else if (st.towers.length < 3) text = '沿路再建两座飞镖塔，别让怪走到房车。';
+    if (!built) text = '点地图上的空地，建一座飞镖塔。';
+    else if (st.towers.length < 3) text = '再建两座飞镖塔，别让怪走到景区。';
     else if (!upgraded) text = '点塔可以升级，升到 2 级更稳。';
-    else if (st.phase === 'prepare') text = '准备好了就点「开始第 1 波」。';
-    else text = '别让怪兽走到房车！';
+    else if (st.phase === 'prepare') text = '准备好了，下一波会自动开始。';
+    else text = '别让怪兽走到景区！';
     if (tip.dataset.text !== text) {
       tip.dataset.text = text;
       $('tip-text').textContent = text;
