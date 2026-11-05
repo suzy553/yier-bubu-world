@@ -113,6 +113,10 @@ const LEVELS = [
       { groups:[{enemy:'fuzz',count:12,gap:0.62},{enemy:'dango',count:3,gap:0.8}], reward:40 }
     ],
     coins:200, lives:10, towers:['dart'], reward:120, tint:'rgba(255,238,204,.46)',
+    props:[
+      { type:'chest', x:170, y:560, hp:60, reward:25 },
+      { type:'luckybag', x:700, y:380, hp:50, reward:20 }
+    ],
     tip:'点一个木桩，建一座飞镖塔。'
   },
   {
@@ -126,6 +130,10 @@ const LEVELS = [
       { groups:[{enemy:'dango',count:14,gap:0.45},{enemy:'can',count:2,gap:1.2}], reward:46 }
     ],
     coins:230, lives:10, towers:['dart','sling'], reward:140, tint:'rgba(255,232,196,.44)',
+    props:[
+      { type:'chest', x:360, y:330, hp:60, reward:25 },
+      { type:'luckybag', x:760, y:380, hp:50, reward:20 }
+    ],
     tip:'新塔：弹弓塔。射程远，专门打快跑团子。'
   },
   {
@@ -139,6 +147,10 @@ const LEVELS = [
       { groups:[{enemy:'can',count:3,gap:0.9},{enemy:'dango',count:12,gap:0.4}], reward:52 }
     ],
     coins:320, lives:10, towers:['dart','sling','honey'], reward:160, tint:'rgba(226,238,255,.44)',
+    props:[
+      { type:'chest', x:200, y:300, hp:70, reward:30 },
+      { type:'luckybag', x:760, y:380, hp:55, reward:20 }
+    ],
     tip:'新塔：蜂蜜罐。先减速，再让飞镖和弹弓慢慢打。'
   },
   {
@@ -152,6 +164,10 @@ const LEVELS = [
       { groups:[{enemy:'fuzz',count:18,gap:0.4},{enemy:'pudding',count:5,gap:0.75},{enemy:'dango',count:10,gap:0.4}], reward:56 }
     ],
     coins:420, lives:10, towers:['dart','sling','honey','camera'], reward:180, tint:'rgba(255,214,170,.44)',
+    props:[
+      { type:'chest', x:300, y:200, hp:70, reward:30 },
+      { type:'luckybag', x:800, y:380, hp:55, reward:20 }
+    ],
     tip:'新塔：拍立得。闪光能眩晕一片，布丁分裂也不怕。'
   },
   {
@@ -164,6 +180,11 @@ const LEVELS = [
       { groups:[{enemy:'boss',count:1,gap:1},{enemy:'fuzz',count:10,gap:0.35},{enemy:'dango',count:8,gap:0.4}], reward:120 }
     ],
     coins:400, lives:12, towers:['dart','sling','honey','camera'], reward:300, tint:'rgba(255,196,150,.48)', boss:true,
+    props:[
+      { type:'chest', x:300, y:300, hp:80, reward:35 },
+      { type:'luckybag', x:860, y:300, hp:60, reward:25 },
+      { type:'chest', x:1100, y:480, hp:80, reward:35 }
+    ],
     tip:'灯笼大魔王来了！把四种塔都用上，别让它走到房车。'
   }
 ];

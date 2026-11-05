@@ -45,6 +45,10 @@ const ART = (() => {
   for (const id of ['dart', 'sling', 'honey', 'camera']) {
     loadSprite(`assets/towers/${id}.png`, towerSprites, id);
   }
+  const propSprites = {};
+  for (const id of ['chest', 'luckybag']) {
+    loadSprite(`assets/props/${id}.png`, propSprites, id);
+  }
 
 
   function circle(ctx, x, y, r, fill, stroke = INK, lw = 5) {
@@ -729,6 +733,24 @@ const ART = (() => {
     ctx.restore();
   }
 
+  function drawProp(ctx, x, y, s, type, opts = {}) {
+    const img = propSprites[type];
+    if (!img || !img.complete || !img.naturalWidth) return;
+    const h = type === 'chest' ? 46 : 42;
+    const w = h * img.naturalWidth / img.naturalHeight;
+    const bob = Math.sin((opts.t || 0) * 2 + x * .01) * 1.5;
+    ctx.save();
+    ctx.translate(x, y + bob);
+    ctx.scale(s, s);
+    ctx.save(); ctx.globalAlpha = .16; ctx.fillStyle = '#3b241c';
+    ctx.beginPath(); ctx.ellipse(0, 14, w * .42, 6, 0, 0, Math.PI * 2); ctx.fill(); ctx.restore();
+    ctx.drawImage(img, -w / 2, 12 - h, w, h);
+    const tw = (Math.sin((opts.t || 0) * 3) + 1) / 2;
+    ctx.globalAlpha = .45 + tw * .45;
+    star(ctx, w * .35, -h * .8, 3.5, '#f6cf6d', '#8a5a20', 1);
+    ctx.restore();
+  }
+
   /* ---------------- 怪物 ---------------- */
   function drawEnemyStatus(ctx, e, opts) {
     if (opts.slow) {
@@ -908,6 +930,46 @@ const ART = (() => {
     ctx.restore();
   }
 
+  function drawMiniPath(ctx, level, w, h) {
+    ctx.clearRect(0, 0, w, h);
+    rr(ctx, 1, 1, w - 2, h - 2, 10, '#fff8ec', INK, 2);
+    const pts = level.path || [];
+    if (pts.length < 2) return;
+    const xs = pts.map(p => p[0]), ys = pts.map(p => p[1]);
+    const minX = Math.min(...xs), maxX = Math.max(...xs);
+    const minY = Math.min(...ys), maxY = Math.max(...ys);
+    const pad = 10;
+    const sc = Math.min((w - pad * 2) / Math.max(1, maxX - minX),
+                        (h - pad * 2) / Math.max(1, maxY - minY));
+    const ox = (w - (maxX - minX) * sc) / 2 - minX * sc;
+    const oy = (h - (maxY - minY) * sc) / 2 - minY * sc;
+    const m = pts.map(([x, y]) => [x * sc + ox, y * sc + oy]);
+
+    const trace = () => {
+      ctx.beginPath();
+      ctx.moveTo(m[0][0], m[0][1]);
+      for (let i = 1; i < m.length; i++) ctx.lineTo(m[i][0], m[i][1]);
+    };
+    ctx.save();
+    ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+    trace(); ctx.strokeStyle = INK; ctx.lineWidth = 7; ctx.stroke();
+    trace(); ctx.strokeStyle = '#fff6e2'; ctx.lineWidth = 4; ctx.stroke();
+    trace(); ctx.setLineDash([3, 4]); ctx.strokeStyle = 'rgba(75,43,32,.35)'; ctx.lineWidth = 1.2; ctx.stroke();
+    ctx.setLineDash([]);
+
+    // 木桩
+    for (const [x, y] of level.slots || []) {
+      circle(ctx, x * sc + ox, y * sc + oy, 1.8, '#c99a68', INK, .8);
+    }
+    // 起点旗
+    const s = m[0];
+    poly(ctx, [[s[0], s[1] - 5], [s[0] + 7, s[1] - 2], [s[0], s[1] + 2]], '#d94a3d', INK, 1);
+    // 终点爱心
+    const e = m[m.length - 1];
+    heart(ctx, e[0], e[1], 5, '#f7b6c8', INK, 1.2);
+    ctx.restore();
+  }
+
   function drawSlot(ctx, x, y, opts = {}) {
     ctx.save();
     ctx.translate(x, y);
@@ -1024,8 +1086,8 @@ const ART = (() => {
   return {
     INK, WHITE, BROWN,
     circle, ellipse, rr, capsule, poly, star, heart, coin, paw,
-    drawBear, drawHead, whenTravelReady, drawSeagull, drawTower, drawEnemy,
-    drawBackground, drawPath, drawSlot, drawBase,
+    drawBear, drawHead, whenTravelReady, drawSeagull, drawTower, drawProp, drawEnemy,
+    drawBackground, drawPath, drawMiniPath, drawSlot, drawBase,
     drawCoinPop, drawHit, drawLeaf
   };
 })();

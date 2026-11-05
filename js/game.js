@@ -148,6 +148,8 @@ const GAME = (() => {
       S.bgImg = bgImage;
     }
 
+    for (const p of level.props || []) spawnProp(p);
+
     emit(true);
     last = performance.now();
     raf = requestAnimationFrame(loop);
@@ -294,6 +296,28 @@ const GAME = (() => {
     S.enemies.push(e);
   }
 
+  function spawnProp(def) {
+    const hp = def.hp || 60;
+    S.enemies.push({
+      id: Math.random().toString(36).slice(2),
+      type: def.type,
+      prop: true,
+      hp, maxHp: hp,
+      speed: 0,
+      reward: def.reward || 25,
+      radius: def.type === 'chest' ? 20 : 17,
+      armor: 0,
+      boss: false,
+      split: null,
+      dist: 0,
+      x: def.x, y: def.y,
+      slow: 0, slowT: 0,
+      stun: 0, hitT: 0,
+      dead: false,
+      bossStage: 0
+    });
+  }
+
   function addEffect(type, x, y, delay, life, data) {
     S.effects.push({ type, x, y, t: -delay, life, data: data || {} });
   }
@@ -334,6 +358,14 @@ const GAME = (() => {
   function kill(e) {
     if (e.dead) return;
     e.dead = true;
+    if (e.prop) {
+      S.coins += e.reward;
+      addEffect('coin', e.x, e.y - 18, 0, .55);
+      addFloat(e.x, e.y - 30, `+${e.reward} 币`, '#f6cf6d');
+      sfx('coin');
+      S.enemies = S.enemies.filter(x => x !== e);
+      return;
+    }
     S.coins += e.reward;
     addEffect('coin', e.x, e.y - e.radius, 0, .55);
     addEffect('hit', e.x, e.y, 0, .35);
@@ -407,7 +439,7 @@ const GAME = (() => {
         spawnEnemy(S.queue[S.queueIndex].enemy);
         S.queueIndex++;
       }
-      if (S.queueIndex >= S.queue.length && S.enemies.length === 0) {
+      if (S.queueIndex >= S.queue.length && S.enemies.filter(e => !e.prop).length === 0) {
         if (S.waveIndex >= S.level.waves.length - 1) {
           end(true);
         } else {
@@ -425,6 +457,7 @@ const GAME = (() => {
     for (const e of S.enemies.slice()) {
       if (e.dead) continue;
       e.hitT = Math.max(0, e.hitT - step);
+      if (e.prop) continue;
       if (e.stun > 0) { e.stun -= step; }
       if (e.slowT > 0) { e.slowT -= step; } else { e.slow = 0; }
       const sp = e.stun > 0 ? 0 : e.speed * (1 - e.slow);
@@ -592,18 +625,22 @@ const GAME = (() => {
     const sortedEnemies = S.enemies.slice().sort((a, b) => a.y - b.y);
     for (const e of sortedEnemies) {
       const stun = e.stun > 0;
-      ART.drawEnemy(ctx, e.x, e.y - 8, 1, e.type, {
-        slow: e.slowT > 0, stun, t: S.time
-      });
+      if (e.prop) {
+        ART.drawProp(ctx, e.x, e.y, 1, e.type, { t: S.time });
+      } else {
+        ART.drawEnemy(ctx, e.x, e.y - 8, 1, e.type, {
+          slow: e.slowT > 0, stun, t: S.time
+        });
+      }
       // 血条
       if (!e.dead && e.hp < e.maxHp) {
-        const w = e.boss ? 92 : 42;
+        const w = e.boss ? 92 : e.prop ? 34 : 42;
         const h = e.boss ? 8 : 5;
-        const y = e.y - (e.boss ? 118 : 48);
+        const y = e.y - (e.boss ? 118 : e.prop ? 44 : 48);
         ctx.fillStyle = 'rgba(42,24,18,.35)';
         ctx.beginPath(); ctx.roundRect(e.x - w / 2, y, w, h, 3); ctx.fill();
         const pct = clamp(e.hp / e.maxHp, 0, 1);
-        ctx.fillStyle = pct > .5 ? '#7bc8a4' : pct > .25 ? '#f2b84b' : '#d94a3d';
+        ctx.fillStyle = e.prop ? '#f6cf6d' : pct > .5 ? '#7bc8a4' : pct > .25 ? '#f2b84b' : '#d94a3d';
         ctx.beginPath(); ctx.roundRect(e.x - w / 2, y, w * pct, h, 3); ctx.fill();
         if (e.boss) {
           ctx.fillStyle = '#fff6e2'; ctx.font = 'bold 12px "Microsoft YaHei"'; ctx.textAlign = 'center';

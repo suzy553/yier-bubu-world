@@ -254,6 +254,7 @@
       const starHtml = [0, 1, 2].map(k => `<span class="${k < stars ? 'on' : ''}">★</span>`).join('');
       return `
         <div class="level-node ${unlocked ? '' : 'locked'} ${l.boss ? 'ln-boss' : ''}" data-level="${l.id}">
+          <div class="ln-map"><canvas width="140" height="68"></canvas></div>
           <div class="ln-circle">
             ${unlocked ? (l.boss ? '王' : (i + 1)) : '🔒'}
             <small>${l.boss ? 'BOSS' : '第 ' + (i + 1) + ' 关'}</small>
@@ -263,8 +264,16 @@
         </div>`;
     }).join('');
     wrap.querySelectorAll('.level-node').forEach(el => {
+      const l = LEVELS.find(x => x.id === el.dataset.level);
+      const cv = el.querySelector('.ln-map canvas');
+      if (cv) {
+        const ctx = cv.getContext('2d');
+        const dpr = Math.min(2, window.devicePixelRatio || 1);
+        cv.width = 140 * dpr; cv.height = 68 * dpr;
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        ART.drawMiniPath(ctx, l, 140, 68);
+      }
       el.addEventListener('click', () => {
-        const l = LEVELS.find(x => x.id === el.dataset.level);
         const idx = LEVELS.indexOf(l);
         if (!isLevelUnlocked(idx)) { toast('先通关上一关，才能继续往前走。'); return; }
         Sound.sfx('click');
