@@ -832,9 +832,10 @@
       persist();
     }
 
-    setTimeout(() => {
-      show('screen-menu');
-      const q = params.get('screen');
+    ART.whenTravelReady(() => {
+      setTimeout(() => {
+        show('screen-menu');
+        const q = params.get('screen');
       if (q === 'map') show('screen-map');
       else if (q === 'levels') show('screen-levels');
       else if (q === 'wardrobe') { previewOutfit = save.outfit; show('screen-wardrobe'); renderWardrobe(); }
@@ -852,7 +853,8 @@
           }, 800);
         }
       }
-    }, 380);
+      }, 380);
+    });
   }
 
   window.__APP = {

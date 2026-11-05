@@ -12,17 +12,30 @@ const ART = (() => {
   const sprites = { yier: {}, bubu: {}, pair: {} };
   const heads = { yier: {}, bubu: {} };
   function loadSprite(src, bucket, key) {
-    if (typeof Image === 'undefined') return;
-    const img = new Image();
-    img.onload = () => { bucket[key] = img; };
-    img.src = src;
+    if (typeof Image === 'undefined') return Promise.resolve(null);
+    return new Promise(resolve => {
+      const img = new Image();
+      img.onload = () => { bucket[key] = img; resolve(img); };
+      img.onerror = () => resolve(null);
+      img.src = src;
+    });
   }
+  const travelPromises = [];
   for (const id of OUTFIT_IDS) {
-    loadSprite(`assets/bears/yier-${id}.png`, sprites.yier, id);
-    loadSprite(`assets/bears/bubu-${id}.png`, sprites.bubu, id);
-    loadSprite(`assets/bears/pair-${id}.png`, sprites.pair, id);
-    loadSprite(`assets/bears/yier-head-${id}.png`, heads.yier, id);
-    loadSprite(`assets/bears/bubu-head-${id}.png`, heads.bubu, id);
+    const ps = [
+      loadSprite(`assets/bears/yier-${id}.png`, sprites.yier, id),
+      loadSprite(`assets/bears/bubu-${id}.png`, sprites.bubu, id),
+      loadSprite(`assets/bears/pair-${id}.png`, sprites.pair, id),
+      loadSprite(`assets/bears/yier-head-${id}.png`, heads.yier, id),
+      loadSprite(`assets/bears/bubu-head-${id}.png`, heads.bubu, id)
+    ];
+    if (id === 'travel') travelPromises.push(ps[0], ps[1], ps[2]);
+  }
+  function whenTravelReady(cb) {
+    Promise.race([
+      Promise.all(travelPromises),
+      new Promise(resolve => setTimeout(resolve, 2500))
+    ]).then(cb);
   }
   const monsterSprites = {};
   for (const id of ['fuzz', 'dango', 'can', 'pudding', 'boss']) {
@@ -1011,7 +1024,7 @@ const ART = (() => {
   return {
     INK, WHITE, BROWN,
     circle, ellipse, rr, capsule, poly, star, heart, coin, paw,
-    drawBear, drawHead, drawSeagull, drawTower, drawEnemy,
+    drawBear, drawHead, whenTravelReady, drawSeagull, drawTower, drawEnemy,
     drawBackground, drawPath, drawSlot, drawBase,
     drawCoinPop, drawHit, drawLeaf
   };
