@@ -200,7 +200,7 @@ const GAME = (() => {
       S.bgImg = bgImage;
     } else {
       bgImage = new Image();
-      bgImage.src = 'assets/cn.jpg?v=21';
+      bgImage.src = 'assets/cn.jpg?v=22';
       bgImage.onload = () => { if (S) S.bgImg = bgImage; };
       S.bgImg = bgImage;
     }
@@ -350,10 +350,13 @@ const GAME = (() => {
     let t = 0;
     const gapScale = S.spawnGap || 1;
     for (const g of wave.groups) {
+      const def = ENEMIES[g.enemy] || ENEMIES.fuzz;
+      const minGap = (def.radius * 2 + 18) / Math.max(1, def.speed);
+      const interval = Math.max(g.gap * gapScale, minGap);
       for (let i = 0; i < g.count; i++) {
-        S.queue.push({ time: t + i * g.gap * gapScale, enemy: g.enemy });
+        S.queue.push({ time: t + i * interval, enemy: g.enemy });
       }
-      t += g.count * g.gap * gapScale + .9 * gapScale;
+      t += g.count * interval + .9 * gapScale;
     }
     S.queue.sort((a, b) => a.time - b.time);
     S.bannerT = 1.6;
@@ -653,6 +656,21 @@ const GAME = (() => {
       if (e.dist >= S.path.total) {
         leak(e);
         if (S.over) return;
+      }
+    }
+
+    // 保持怪兽之间的安全距离，避免挤成一团
+    const walkers = S.enemies
+      .filter(e => !e.prop && !e.dead)
+      .sort((a, b) => b.dist - a.dist);
+    for (let i = 1; i < walkers.length; i++) {
+      const front = walkers[i - 1];
+      const e = walkers[i];
+      const minDist = (front.radius || 16) + (e.radius || 16) + 18;
+      if (front.dist - e.dist < minDist) {
+        e.dist = Math.max(0, front.dist - minDist);
+        const pos = S.path.at(e.dist);
+        e.x = pos.x; e.y = pos.y;
       }
     }
 

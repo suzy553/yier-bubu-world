@@ -6,7 +6,7 @@ const ART = (() => {
   const BROWN = '#c98e63';
   const BROWN_DARK = '#7a4a33';
   const BLUSH = 'rgba(247,150,160,.55)';
-  const ASSET_V = '21';
+  const ASSET_V = '22';
 
   // 豆包生成的角色素材（白底贴纸卡，按服装分目录）
   const OUTFIT_IDS = ['travel', 'cn', 'jp', 'fr', 'gb', 'au', 'gr', 'world'];
