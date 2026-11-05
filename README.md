@@ -59,11 +59,12 @@ yier-bubu-world/
 ├─ assets/             6 个国家背景图（来自背单词 app 的国家插画）
 ├─ assets/bears/       豆包生成的角色贴纸卡/头像
 ├─ assets/monsters/    豆包生成的小怪/Boss 透明贴图
+├─ assets/towers/      豆包生成的 4 种塔透明贴图
 ├─ art/generated/      豆包原始角色设定图
 ├─ prompts/            豆包生成提示词
 ├─ js/
 │  ├─ data.js          国家、服装、塔、怪物、关卡数据
-│  ├─ art.js           Canvas 塔/场景 + 豆包角色/怪物贴图
+│  ├─ art.js           Canvas 场景 + 豆包角色/怪物/塔贴图
 │  ├─ game.js          塔防核心逻辑
 │  └─ app.js           界面、存档、换装、流程
 └─ shots/              开发时截的预览图
@@ -77,6 +78,7 @@ yier-bubu-world/
 - 为什么用白底卡片：一二的身体是白色的，直接抠白底会把身体也抠掉；白底拍立得卡能保证角色完整，也更贴旅行手账的风格。
 - 动图：游戏里用 Canvas 做呼吸/轻微摇摆；`shots/outfits-preview.gif` 是 8 套服装的循环预览。
 - 5 种小怪和 Boss 也由 Seedream Pro 生成，透明底在 `assets/monsters/`；游戏里保留血条、减速、眩晕、布丁分裂等逻辑，贴图只负责外观。
+- 4 种塔（飞镖、弹弓、蜂蜜罐、拍立得）同样换成 Seedream Pro 的 Q 版透明贴图，在 `assets/towers/`；等级星星、后坐力和左右翻转仍由 Canvas 处理。
 - 表情表里的 4/5/6 有 AI 瑕疵，暂不使用；剧情头像直接用全身图的头部裁切。
 
 ## 说明

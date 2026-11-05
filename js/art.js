@@ -28,6 +28,10 @@ const ART = (() => {
   for (const id of ['fuzz', 'dango', 'can', 'pudding', 'boss']) {
     loadSprite(`assets/monsters/${id}.png`, monsterSprites, id);
   }
+  const towerSprites = {};
+  for (const id of ['dart', 'sling', 'honey', 'camera']) {
+    loadSprite(`assets/towers/${id}.png`, towerSprites, id);
+  }
 
 
   function circle(ctx, x, y, r, fill, stroke = INK, lw = 5) {
@@ -631,6 +635,24 @@ const ART = (() => {
     ctx.translate(x, y);
     ctx.scale(s, s);
     ctx.lineJoin = 'round';
+
+    const sprite = towerSprites[type];
+    if (sprite && sprite.complete && sprite.naturalWidth) {
+      const lvS = 1 + (level - 1) * .045;
+      const h = 100 * lvS;
+      const w = h * sprite.naturalWidth / sprite.naturalHeight;
+      ctx.save();
+      ctx.globalAlpha = .16; ctx.fillStyle = '#3b241c';
+      ctx.beginPath(); ctx.ellipse(0, 28, 34, 8, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.restore();
+      if (Math.cos(opts.angle || 0) < -.1) ctx.scale(-1, 1);
+      ctx.translate(0, (opts.recoil || 0) * 3);
+      ctx.drawImage(sprite, -w / 2, 30 - h, w, h);
+      for (let i = 0; i < level; i++) star(ctx, -16 + i * 16, 22, 5, '#f6cf6d', INK, 1.5);
+      ctx.restore();
+      return;
+    }
+
     towerBase(ctx);
 
     if (type === 'dart') {

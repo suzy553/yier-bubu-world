@@ -509,7 +509,7 @@
       canvas.width = 52 * dpr; canvas.height = 52 * dpr;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       ctx.clearRect(0, 0, 52, 52);
-      ART.drawTower(ctx, 26, 38, .52, id, 1, { angle: -0.5 });
+      ART.drawTower(ctx, 26, 36, .52, id, 1, { angle: -0.5 });
       el.addEventListener('click', () => GAME.selectBuild(id));
     });
   }
@@ -580,7 +580,7 @@
         const cv = icon.querySelector('canvas');
         cv.width = 40 * dpr; cv.height = 40 * dpr;
         ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-        ART.drawTower(ctx, 20, 32, .42, sel.type, sel.level, { angle: -0.5 });
+        ART.drawTower(ctx, 20, 28, .38, sel.type, sel.level, { angle: -0.5 });
         icon.dataset.drawn = '1';
         icon.dataset.type = sel.type;
       }
