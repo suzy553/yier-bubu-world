@@ -6,7 +6,7 @@ const ART = (() => {
   const BROWN = '#c98e63';
   const BROWN_DARK = '#7a4a33';
   const BLUSH = 'rgba(247,150,160,.55)';
-  const ASSET_V = '22';
+  const ASSET_V = '23';
 
   // 豆包生成的角色素材（白底贴纸卡，按服装分目录）
   const OUTFIT_IDS = ['travel', 'cn', 'jp', 'fr', 'gb', 'au', 'gr', 'world'];
@@ -1005,6 +1005,137 @@ const ART = (() => {
     ctx.restore();
   }
 
+  const stoneCache = new Map();
+
+  function traceStonePath(g, points) {
+    g.beginPath();
+    g.moveTo(points[0][0], points[0][1]);
+    for (let i = 1; i < points.length; i++) g.lineTo(points[i][0], points[i][1]);
+  }
+
+  function stoneTexture(points, id) {
+    const key = `${id || ''}:${points.map(p => p.join(',')).join(';')}`;
+    if (stoneCache.has(key)) return stoneCache.get(key);
+    const c = document.createElement('canvas');
+    c.width = 1280; c.height = 720;
+    const g = c.getContext('2d');
+    g.lineJoin = 'round'; g.lineCap = 'round';
+    g.strokeStyle = '#fff'; g.lineWidth = 54;
+    traceStonePath(g, points); g.stroke();
+    g.globalCompositeOperation = 'source-atop';
+
+    const grad = g.createLinearGradient(0, 0, 0, 720);
+    grad.addColorStop(0, '#f2d9a4');
+    grad.addColorStop(.55, '#e8c98d');
+    grad.addColorStop(1, '#d8b476');
+    g.fillStyle = grad; g.fillRect(0, 0, 1280, 720);
+
+    // 砖缝
+    g.strokeStyle = 'rgba(150,105,60,.22)'; g.lineWidth = 1.4;
+    for (let y = 0; y <= 720; y += 24) {
+      g.beginPath(); g.moveTo(0, y); g.lineTo(1280, y); g.stroke();
+      const off = (Math.floor(y / 24) % 2) * 19;
+      for (let x = -off; x < 1280; x += 38) {
+        g.beginPath(); g.moveTo(x, y); g.lineTo(x, y + 24); g.stroke();
+      }
+    }
+
+    // 青苔/斑点
+    let seed = 17;
+    for (const ch of (id || 'china')) seed = (seed * 31 + ch.charCodeAt(0)) % 99991;
+    const rnd = () => { seed = (seed * 9301 + 49297) % 233280; return seed / 233280; };
+    for (let i = 0; i < 58; i++) {
+      const x = rnd() * 1280, y = rnd() * 720;
+      const rx = 4 + rnd() * 13, ry = 2 + rnd() * 6;
+      g.fillStyle = i % 3 === 0 ? 'rgba(245,235,210,.28)' : 'rgba(94,138,82,.28)';
+      g.beginPath(); g.ellipse(x, y, rx, ry, rnd() * 2, 0, Math.PI * 2); g.fill();
+    }
+    g.globalCompositeOperation = 'source-over';
+    stoneCache.set(key, c);
+    return c;
+  }
+
+  function drawStonePath(ctx, points, opts = {}) {
+    if (!points || points.length < 2) return;
+    const tex = stoneTexture(points, opts.id);
+    ctx.save();
+    ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+    const trace = () => {
+      ctx.beginPath();
+      ctx.moveTo(points[0][0], points[0][1]);
+      for (let i = 1; i < points.length; i++) ctx.lineTo(points[i][0], points[i][1]);
+    };
+    ctx.save(); ctx.translate(0, 6);
+    trace(); ctx.strokeStyle = 'rgba(57,39,27,.22)'; ctx.lineWidth = 70; ctx.stroke();
+    ctx.restore();
+    trace(); ctx.strokeStyle = '#7a5a3c'; ctx.lineWidth = 68; ctx.stroke();
+    trace(); ctx.strokeStyle = '#c49b63'; ctx.lineWidth = 60; ctx.stroke();
+    ctx.drawImage(tex, 0, 0);
+    ctx.restore();
+  }
+
+  function drawPad(ctx, x, y, opts = {}) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.save(); ctx.globalAlpha = .2; ctx.fillStyle = '#3b241c';
+    ctx.beginPath(); ctx.ellipse(0, 13, 34, 10, 0, 0, Math.PI * 2); ctx.fill(); ctx.restore();
+    // 石鼓底座
+    ctx.beginPath(); ctx.ellipse(0, 8, 33, 15, 0, 0, Math.PI * 2);
+    ctx.fillStyle = '#c49a68'; ctx.fill(); ctx.strokeStyle = INK; ctx.lineWidth = 3; ctx.stroke();
+    ctx.beginPath(); ctx.ellipse(0, 1, 33, 14, 0, 0, Math.PI * 2);
+    ctx.fillStyle = '#f3ddb2'; ctx.fill(); ctx.stroke();
+    // 红漆腰带
+    ctx.beginPath(); ctx.ellipse(0, 5, 29, 11.5, 0, 0, Math.PI * 2);
+    ctx.strokeStyle = '#d95d4f'; ctx.lineWidth = 6; ctx.stroke();
+    // 内圈 + 星星
+    ctx.beginPath(); ctx.ellipse(0, -2, 21, 8.5, 0, 0, Math.PI * 2);
+    ctx.fillStyle = opts.highlight ? '#ffe9b8' : '#fff1d2'; ctx.fill();
+    ctx.strokeStyle = 'rgba(75,43,32,.6)'; ctx.lineWidth = 2; ctx.stroke();
+    star(ctx, 0, -3, 5, opts.highlight ? '#f2b84b' : '#d99a2b', INK, 1.4);
+    // 青苔
+    ctx.globalAlpha = .75; ctx.fillStyle = '#7bc8a4';
+    ctx.beginPath(); ctx.ellipse(-23, 3, 6, 3.5, -.4, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(22, 6, 4.5, 2.8, .5, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+  }
+
+  function drawDecor(ctx, x, y, type, s = 1, t = 0) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.scale(s, s);
+    const bob = Math.sin(t * 2 + x * .02) * 1.2;
+    ctx.save(); ctx.globalAlpha = .14; ctx.fillStyle = '#3b241c';
+    ctx.beginPath(); ctx.ellipse(0, 8, 15, 5, 0, 0, Math.PI * 2); ctx.fill(); ctx.restore();
+    ctx.translate(0, bob);
+    if (type === 'flower') {
+      ctx.strokeStyle = '#5e8b4e'; ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.moveTo(0, 6); ctx.lineTo(0, -10); ctx.stroke();
+      ctx.fillStyle = '#7bc8a4'; ctx.strokeStyle = INK; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.ellipse(-7, 0, 6, 3, -.5, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+      for (let i = 0; i < 5; i++) {
+        const a = i * Math.PI * 2 / 5;
+        circle(ctx, Math.cos(a) * 8, -12 + Math.sin(a) * 8, 5, i % 2 ? '#f7b6c8' : '#fff1d2', INK, 1.5);
+      }
+      circle(ctx, 0, -12, 4.5, '#f2b84b', INK, 1.5);
+    } else if (type === 'bush') {
+      circle(ctx, -9, 1, 10, '#8fd6b4', INK, 2);
+      circle(ctx, 8, 0, 9, '#7bc8a4', INK, 2);
+      circle(ctx, 0, -7, 11, '#9bddb8', INK, 2);
+      circle(ctx, -3, -9, 2, '#f7b6c8', null, 0);
+      circle(ctx, 5, -5, 2, '#f2b84b', null, 0);
+    } else if (type === 'rock') {
+      poly(ctx, [[-14, 4], [-9, -8], [2, -11], [13, -3], [12, 6], [-5, 9]], '#c7b590', INK, 2);
+      poly(ctx, [[-8, -5], [0, -9], [8, -3], [1, 1]], '#e8d7b8', null, 0);
+    } else {
+      ctx.strokeStyle = '#7a5a3c'; ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.moveTo(0, 6); ctx.lineTo(0, -20); ctx.stroke();
+      ctx.beginPath(); ctx.ellipse(0, -20, 8, 4, 0, 0, Math.PI * 2);
+      ctx.fillStyle = '#d95d4f'; ctx.fill(); ctx.strokeStyle = INK; ctx.lineWidth = 2; ctx.stroke();
+      ctx.fillStyle = '#f6cf6d'; ctx.fillRect(-2, -34, 4, 4);
+    }
+    ctx.restore();
+  }
+
   function drawSlot(ctx, x, y, opts = {}) {
     ctx.save();
     ctx.translate(x, y);
@@ -1142,7 +1273,7 @@ const ART = (() => {
     INK, WHITE, BROWN,
     circle, ellipse, rr, capsule, poly, star, heart, coin, paw,
     drawBear, drawHead, whenTravelReady, whenOutfitReady, isOutfitReady, drawSeagull, drawTower, drawProp, drawEnemy,
-    drawBackground, drawPath, drawMiniPath, drawSlot, drawBase, drawLandmark,
+    drawBackground, drawPath, drawStonePath, drawMiniPath, drawSlot, drawPad, drawDecor, drawBase, drawLandmark,
     drawCoinPop, drawHit, drawLeaf
   };
 })();

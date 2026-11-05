@@ -146,7 +146,7 @@
     if (wardrobeRaf) { cancelAnimationFrame(wardrobeRaf); wardrobeRaf = 0; }
     if (id === 'screen-menu') {
       const outfit = currentOutfit();
-      $('menu-place').textContent = `第一站 · 中国 · 当前穿搭：${outfit.name} · v22`;
+      $('menu-place').textContent = `第一站 · 中国 · 当前穿搭：${outfit.name} · v23`;
       ART.whenOutfitReady(outfit.id, () => {
         if (currentScreen === 'screen-menu') startMenuLoop();
       });
@@ -972,7 +972,7 @@
     fetch(`version.json?t=${Date.now()}`, { cache: 'no-store' })
       .then(r => r.json())
       .then(v => {
-        if (v.version && String(v.version) !== '22') {
+        if (v.version && String(v.version) !== '23') {
           const target = `v${v.version}.html`;
           if (!location.pathname.endsWith(target)) location.replace(target);
         }

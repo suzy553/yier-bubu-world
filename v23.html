@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<base href="./">
+<meta name="app-version" content="23">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">`n<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">`n<meta http-equiv="Pragma" content="no-cache">
+<meta name="theme-color" content="#f7e7cf">
+<link rel="icon" href="data:,">
+<title>一二布布环游世界</title>
+<link rel="stylesheet" href="style.css?v=23">
+</head>
+<body>
+<div id="stage">
+
+  <!-- 加载 -->
+  <section id="screen-loading" class="screen active">
+    <div class="loading-box">
+      <div class="loading-bears" id="loading-bears"></div>
+      <h1 class="logo-small">一二布布环游世界</h1>
+      <p class="muted">正在收拾行李…</p>
+    </div>
+  </section>
+
+  <!-- 主菜单 -->
+  <section id="screen-menu" class="screen menu-screen">
+    <div class="menu-sky"></div>
+    <div class="menu-cloud cloud-a"></div>
+    <div class="menu-cloud cloud-b"></div>
+    <div class="menu-content">
+      <div class="title-wrap">
+        <div class="title-kicker">YIER &amp; BUBU</div>
+        <h1 class="game-title">一二布布<span>环游世界</span></h1>
+        <p class="game-sub">带着飞镖塔，去长城脚下打小怪兽</p>
+      </div>
+      <canvas id="menu-bears" width="560" height="330"></canvas>
+      <div class="menu-actions">
+        <button class="btn primary big" id="btn-start">开始旅行</button>
+        <button class="btn" id="btn-wardrobe">打开衣柜</button>
+        <button class="btn ghost" id="btn-journal">旅行手账</button>
+        <button class="btn ghost" id="btn-endless">无尽模式</button>
+      </div>
+      <div class="menu-foot">
+        <span id="menu-place">第一站 · 中国</span>
+        <button class="icon-btn" id="btn-sound-menu" title="声音">🔊</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- 世界地图 -->
+  <section id="screen-map" class="screen map-screen">
+    <header class="topbar">
+      <button class="icon-btn" id="btn-map-back">←</button>
+      <div class="topbar-title">环球旅行地图</div>
+      <div class="coin-pill"><span class="coin-dot"></span><b id="map-coins">0</b></div>
+    </header>
+    <div class="map-head">
+      <h2>沿着虚线，一站一站走</h2>
+      <p>通关一个国家，就能收集印章、解锁新衣服。</p>
+    </div>
+    <div class="map-route" id="map-route"></div>
+    <div class="map-note">中国站已开放 · 其他站点正在施工中</div>
+  </section>
+
+  <!-- 关卡选择 -->
+  <section id="screen-levels" class="screen levels-screen">
+    <header class="topbar">
+      <button class="icon-btn" id="btn-levels-back">←</button>
+      <div class="topbar-title" id="levels-title">中国 · 汉字之城</div>
+      <div class="coin-pill"><span class="coin-dot"></span><b id="levels-coins">0</b></div>
+    </header>
+    <div class="levels-hero">
+      <canvas id="levels-bears" width="360" height="240"></canvas>
+      <div class="levels-copy">
+        <div class="chapter-tag">第一章</div>
+        <h2>长城脚下的小怪兽</h2>
+        <p>一二和布布刚下大巴，行李就被一群绒球怪盯上了。把飞镖塔架起来，保护景区！</p>
+      </div>
+    </div>
+    <div class="level-path" id="level-path"></div>
+    <div class="levels-foot">通关后获得熊熊币，可以去衣柜给两只熊换装。</div>
+  </section>
+
+  <!-- 游戏 -->
+  <section id="screen-game" class="screen game-screen">
+    <canvas id="game-canvas" width="1280" height="720"></canvas>
+
+    <div class="hud">
+      <div class="hud-left">
+        <div class="heart-pill" id="hud-lives">❤ 10</div>
+        <div class="coin-pill"><span class="coin-dot"></span><b id="hud-coins">150</b></div>
+        <div class="buff-pill" id="buff-pill"></div>
+      </div>
+      <div class="hud-center">
+        <div class="wave-label" id="hud-wave">准备中</div>
+        <div class="wave-dots" id="hud-wave-dots"></div>
+      </div>
+      <div class="hud-right">
+        <button class="icon-btn" id="btn-speed" title="加速">1×</button>
+        <button class="icon-btn" id="btn-fullscreen" title="全屏">⛶</button>
+        <button class="icon-btn" id="btn-pause" title="暂停">⏸</button>
+      </div>
+    </div>
+
+    <div class="tip-bubble" id="tip-bubble">
+      <div class="tip-name">鸥鸥提示</div>
+      <div class="tip-text" id="tip-text">点地图上的空地，建一座飞镖塔。</div>
+      <button class="tip-next" id="tip-next">知道啦</button>
+    </div>
+
+    <div class="wave-action" id="wave-action">
+      <button class="btn primary" id="btn-wave">开始第 1 波</button>
+    </div>
+
+    <div class="skillbar" id="skillbar">
+      <button class="skill-btn" id="skill-freeze"><span>❄️</span><small>冰冻</small><b class="cd-text"></b></button>
+      <button class="skill-btn" id="skill-bomb"><span>💣</span><small>轰炸</small><b class="cd-text"></b></button>
+    </div>
+
+    <div class="buildbar" id="buildbar"></div>
+
+    <div class="tower-panel" id="tower-panel">
+      <div class="panel-head">
+        <div class="panel-icon" id="panel-icon"></div>
+        <div>
+          <div class="panel-name" id="panel-name">飞镖塔</div>
+          <div class="panel-level" id="panel-level">Lv.1</div>
+        </div>
+        <button class="icon-btn panel-close" id="panel-close">×</button>
+      </div>
+      <div class="panel-stats" id="panel-stats"></div>
+      <div class="branch-box" id="branch-box"></div>
+      <div class="panel-actions">
+        <button class="btn primary" id="btn-upgrade">升级 · 80</button>
+        <button class="btn ghost" id="btn-sell">拆除 · +36</button>
+      </div>
+    </div>
+
+    <div class="banner" id="banner"></div>
+
+    <div class="pause-overlay" id="pause-overlay">
+      <div class="pause-card">
+        <div class="pause-bears" id="pause-bears"></div>
+        <h2>休息一下</h2>
+        <p>布布说：零食已经摆好了。</p>
+        <button class="btn primary" id="btn-resume">继续旅行</button>
+        <button class="btn ghost" id="btn-quit">回到地图</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- 结算 -->
+  <section id="screen-result" class="screen result-screen">
+    <div class="result-card">
+      <div class="result-kicker" id="result-kicker">关卡完成</div>
+      <h2 id="result-title">长城脚下</h2>
+      <div class="stars" id="result-stars"></div>
+      <div class="result-goals" id="result-goals"></div>
+      <canvas id="result-bears" width="420" height="240"></canvas>
+      <div class="reward-row">
+        <div class="reward"><span class="coin-dot big"></span><b id="result-coins">+120</b><small>熊熊币</small></div>
+        <div class="reward" id="result-stamp-wrap"><span class="stamp-mini">印</span><b id="result-stamp">中国印章</b><small>收集品</small></div>
+      </div>
+      <div class="result-actions">
+        <button class="btn primary" id="btn-result-next">继续</button>
+        <button class="btn" id="btn-result-replay">再玩一次</button>
+        <button class="btn" id="btn-result-wardrobe">去衣柜</button>
+        <button class="btn ghost" id="btn-result-map">回地图</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- 衣柜 -->
+  <section id="screen-wardrobe" class="screen wardrobe-screen">
+    <header class="topbar">
+      <button class="icon-btn" id="btn-wardrobe-back">←</button>
+      <div class="topbar-title">一二布布的衣柜</div>
+      <div class="coin-pill"><span class="coin-dot"></span><b id="wardrobe-coins">0</b></div>
+    </header>
+    <div class="wardrobe-stage">
+      <div class="wardrobe-bg"></div>
+      <canvas id="wardrobe-canvas" width="980" height="330"></canvas>
+      <div class="wardrobe-label" id="wardrobe-label">旅行装</div>
+    </div>
+    <div class="outfit-grid" id="outfit-grid"></div>
+    <div class="wardrobe-actions">
+      <button class="btn primary" id="btn-wear">穿上这套</button>
+      <div class="wardrobe-hint" id="wardrobe-hint">选一套喜欢的，两只熊一起换。</div>
+    </div>
+  </section>
+
+  <!-- 旅行手账 -->
+  <section id="screen-journal" class="screen journal-screen">
+    <header class="topbar">
+      <button class="icon-btn" id="btn-journal-back">←</button>
+      <div class="topbar-title">旅行手账</div>
+      <div class="coin-pill"><span class="coin-dot"></span><b id="journal-coins">0</b></div>
+    </header>
+    <div class="journal-paper">
+      <h2>已收集的印章</h2>
+      <div class="stamp-grid" id="stamp-grid"></div>
+      <h2>小怪兽图鉴</h2>
+      <div class="monster-grid" id="monster-grid"></div>
+      <p class="journal-note">集齐六个国家的印章，就能解锁“环球旅行斗篷”。</p>
+    </div>
+  </section>
+
+  <!-- 剧情对话 -->
+  <div class="story-overlay" id="story-overlay">
+    <div class="story-card">
+      <canvas id="story-portrait" width="220" height="220"></canvas>
+      <div class="story-body">
+        <div class="story-name" id="story-name">鸥鸥</div>
+        <div class="story-text" id="story-text"></div>
+      </div>
+      <button class="btn primary" id="story-next">继续</button>
+    </div>
+  </div>
+
+  <!-- 提示 -->
+  <div class="toast" id="toast"></div>
+</div>
+
+<!-- 竖屏提示 -->
+<div class="rotate-hint" id="rotate-hint">
+  <div class="rotate-icon">↻</div>
+  <p>把手机横过来，旅行更舒服</p>
+</div>
+
+<script src="js/data.js?v=23"></script>
+<script src="js/art.js?v=23"></script>
+<script src="js/game.js?v=23"></script>
+<script src="js/app.js?v=23"></script>
+</body>
+</html>

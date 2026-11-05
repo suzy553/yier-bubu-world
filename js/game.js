@@ -154,6 +154,8 @@ const GAME = (() => {
       waveHpScale: 1,
       spawnGap: 1.3,
       slots: level.slots.map(([x, y]) => ({ x, y, tower: null })),
+      pads: (level.pads || []).map(([x, y]) => ({ x, y })),
+      decor: level.decor || [],
       towers: [],
       enemies: [],
       projectiles: [],
@@ -196,11 +198,11 @@ const GAME = (() => {
       damageBuffMult: 1
     };
 
-    if (bgImage && bgImage.src.includes('cn.jpg')) {
+    if (bgImage && bgImage.src.includes('cn-toon')) {
       S.bgImg = bgImage;
     } else {
       bgImage = new Image();
-      bgImage.src = 'assets/cn.jpg?v=22';
+      bgImage.src = 'assets/cn-toon.jpg?v=23';
       bgImage.onload = () => { if (S) S.bgImg = bgImage; };
       S.bgImg = bgImage;
     }
@@ -794,7 +796,10 @@ const GAME = (() => {
     if (!S) return;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ART.drawBackground(ctx, S.bgImg, S.level.tint, S.time);
-    ART.drawPath(ctx, S.level.path, { time: S.time });
+    if (S.level.chapter === '中国') ART.drawStonePath(ctx, S.level.path, { id: S.level.id, time: S.time });
+    else ART.drawPath(ctx, S.level.path, { time: S.time });
+    for (const pad of S.pads || []) ART.drawPad(ctx, pad.x, pad.y, { highlight: !!S.buildType });
+    for (const d of S.decor || []) ART.drawDecor(ctx, d.x, d.y, d.type, d.s || 1, S.time);
 
     // 起点旗
     const start = S.path.at(0);
