@@ -133,7 +133,12 @@ const LEVELS = [
       {type:'flower',x:80,y:360},{type:'bush',x:220,y:545},{type:'rock',x:300,y:90},
       {type:'flower',x:420,y:340},{type:'lantern',x:520,y:90},{type:'bush',x:760,y:360},
       {type:'flower',x:900,y:140},{type:'rock',x:1080,y:240},{type:'flower',x:1120,y:560},
-      {type:'bush',x:650,y:560}
+      {type:'bush',x:650,y:560},
+      {type:'flower',x:60,y:220},{type:'flower',x:200,y:120},{type:'flower',x:360,y:80},
+      {type:'flower',x:560,y:420},{type:'flower',x:760,y:540},{type:'flower',x:1040,y:560},
+      {type:'flower',x:1120,y:200},{type:'flower',x:940,y:300},
+      {type:'bush',x:160,y:555},{type:'bush',x:500,y:80},{type:'bush',x:1000,y:80},{type:'bush',x:280,y:555},
+      {type:'rock',x:700,y:80},{type:'rock',x:1100,y:520},{type:'lantern',x:1000,y:80}
     ],
     waves:[
       { groups:[{enemy:'fuzz',count:8,gap:0.85}], reward:28 },

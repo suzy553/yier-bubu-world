@@ -6,7 +6,7 @@ const ART = (() => {
   const BROWN = '#c98e63';
   const BROWN_DARK = '#7a4a33';
   const BLUSH = 'rgba(247,150,160,.55)';
-  const ASSET_V = '23';
+  const ASSET_V = '24';
 
   // 豆包生成的角色素材（白底贴纸卡，按服装分目录）
   const OUTFIT_IDS = ['travel', 'cn', 'jp', 'fr', 'gb', 'au', 'gr', 'world'];
@@ -56,8 +56,15 @@ const ART = (() => {
     loadSprite(`assets/monsters/${id}.png`, monsterSprites, id);
   }
   const towerSprites = {};
+  const towerPromises = [];
   for (const id of ['dart', 'sling', 'honey', 'camera']) {
-    loadSprite(`assets/towers/${id}.png`, towerSprites, id);
+    towerPromises.push(loadSprite(`assets/towers/${id}.png`, towerSprites, id));
+  }
+  function whenTowersReady(cb) {
+    Promise.race([
+      Promise.all(towerPromises),
+      new Promise(resolve => setTimeout(resolve, 2500))
+    ]).then(cb);
   }
   const propSprites = {};
   for (const id of ['chest', 'luckybag', 'mushroom', 'gift', 'pavilion', 'grass', 'bamboo']) {
@@ -1020,7 +1027,7 @@ const ART = (() => {
     c.width = 1280; c.height = 720;
     const g = c.getContext('2d');
     g.lineJoin = 'round'; g.lineCap = 'round';
-    g.strokeStyle = '#fff'; g.lineWidth = 54;
+    g.strokeStyle = '#fff'; g.lineWidth = 44;
     traceStonePath(g, points); g.stroke();
     g.globalCompositeOperation = 'source-atop';
 
@@ -1066,10 +1073,10 @@ const ART = (() => {
       for (let i = 1; i < points.length; i++) ctx.lineTo(points[i][0], points[i][1]);
     };
     ctx.save(); ctx.translate(0, 6);
-    trace(); ctx.strokeStyle = 'rgba(57,39,27,.22)'; ctx.lineWidth = 70; ctx.stroke();
+    trace(); ctx.strokeStyle = 'rgba(57,39,27,.22)'; ctx.lineWidth = 60; ctx.stroke();
     ctx.restore();
-    trace(); ctx.strokeStyle = '#7a5a3c'; ctx.lineWidth = 68; ctx.stroke();
-    trace(); ctx.strokeStyle = '#c49b63'; ctx.lineWidth = 60; ctx.stroke();
+    trace(); ctx.strokeStyle = '#7a5a3c'; ctx.lineWidth = 58; ctx.stroke();
+    trace(); ctx.strokeStyle = '#c49b63'; ctx.lineWidth = 50; ctx.stroke();
     ctx.drawImage(tex, 0, 0);
     ctx.restore();
   }
@@ -1272,7 +1279,7 @@ const ART = (() => {
   return {
     INK, WHITE, BROWN,
     circle, ellipse, rr, capsule, poly, star, heart, coin, paw,
-    drawBear, drawHead, whenTravelReady, whenOutfitReady, isOutfitReady, drawSeagull, drawTower, drawProp, drawEnemy,
+    drawBear, drawHead, whenTravelReady, whenOutfitReady, isOutfitReady, whenTowersReady, drawSeagull, drawTower, drawProp, drawEnemy,
     drawBackground, drawPath, drawStonePath, drawMiniPath, drawSlot, drawPad, drawDecor, drawBase, drawLandmark,
     drawCoinPop, drawHit, drawLeaf
   };

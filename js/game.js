@@ -202,7 +202,7 @@ const GAME = (() => {
       S.bgImg = bgImage;
     } else {
       bgImage = new Image();
-      bgImage.src = 'assets/cn-toon.jpg?v=23';
+      bgImage.src = 'assets/cn-toon.jpg?v=24';
       bgImage.onload = () => { if (S) S.bgImg = bgImage; };
       S.bgImg = bgImage;
     }

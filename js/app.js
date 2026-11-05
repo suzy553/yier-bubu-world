@@ -146,7 +146,7 @@
     if (wardrobeRaf) { cancelAnimationFrame(wardrobeRaf); wardrobeRaf = 0; }
     if (id === 'screen-menu') {
       const outfit = currentOutfit();
-      $('menu-place').textContent = `第一站 · 中国 · 当前穿搭：${outfit.name} · v23`;
+      $('menu-place').textContent = `第一站 · 中国 · 当前穿搭：${outfit.name} · v24`;
       ART.whenOutfitReady(outfit.id, () => {
         if (currentScreen === 'screen-menu') startMenuLoop();
       });
@@ -489,6 +489,13 @@
       onSfx: n => Sound.sfx(n)
     });
     buildBuildBar();
+    ART.whenTowersReady(() => {
+      if (currentScreen !== 'screen-game') return;
+      buildBuildBar();
+      const icon = $('panel-icon');
+      if (icon) icon.dataset.drawn = '';
+      if (GAME.getS()?.selectedTower) updateHUD(GAME.snapshot());
+    });
     $('wave-action').style.display = 'none';
     $('skill-freeze').addEventListener('click', () => {
       GAME.useSkill('freeze');
@@ -972,7 +979,7 @@
     fetch(`version.json?t=${Date.now()}`, { cache: 'no-store' })
       .then(r => r.json())
       .then(v => {
-        if (v.version && String(v.version) !== '23') {
+        if (v.version && String(v.version) !== '24') {
           const target = `v${v.version}.html`;
           if (!location.pathname.endsWith(target)) location.replace(target);
         }
