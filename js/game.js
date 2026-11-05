@@ -65,10 +65,9 @@ const GAME = (() => {
     canvas.addEventListener('pointermove', e => {
       if (!S || S.over || S.paused || !S.buildType) { if (S) S.hover = null; return; }
       const r = canvas.getBoundingClientRect();
-      S.hover = {
-        x: (e.clientX - r.left) * (1280 / r.width),
-        y: (e.clientY - r.top) * (720 / r.height)
-      };
+      const sx = Math.round((e.clientX - r.left) * (1280 / r.width) / 32) * 32;
+      const sy = Math.round((e.clientY - r.top) * (720 / r.height) / 32) * 32;
+      S.hover = { x: sx, y: sy };
     });
     canvas.addEventListener('pointerleave', () => { if (S) S.hover = null; });
   }
@@ -92,7 +91,7 @@ const GAME = (() => {
 
   function canPlaceAt(x, y) {
     if (x < 26 || x > 1254 || y < 86 || y > 560) return { ok: false, reason: '这里太靠边了，换个地方吧。' };
-    if (distToPath(x, y) < 48) return { ok: false, reason: '不能建在怪兽走的路上。' };
+    if (distToPath(x, y) < 52) return { ok: false, reason: '不能建在怪兽走的路上。' };
     if (Math.hypot(x - S.base.x, y - S.base.y) < 76) return { ok: false, reason: '离景区太近了，往旁边挪一点。' };
     for (const t of S.towers) {
       if (Math.hypot(x - t.slot.x, y - t.slot.y) < 44) return { ok: false, reason: '两座塔靠得太近了。' };
@@ -104,9 +103,11 @@ const GAME = (() => {
   }
 
   function tryFreeBuild(x, y) {
-    const check = canPlaceAt(x, y);
+    const sx = Math.round(x / 32) * 32;
+    const sy = Math.round(y / 32) * 32;
+    const check = canPlaceAt(sx, sy);
     if (!check.ok) { toast(check.reason); return; }
-    const slot = { x, y, tower: null };
+    const slot = { x: sx, y: sy, tower: null };
     buildAt(slot);
     S.hover = null;
   }
@@ -202,7 +203,7 @@ const GAME = (() => {
       S.bgImg = bgImage;
     } else {
       bgImage = new Image();
-      bgImage.src = 'assets/cn-toon.jpg?v=24';
+      bgImage.src = 'assets/cn-toon.jpg?v=25';
       bgImage.onload = () => { if (S) S.bgImg = bgImage; };
       S.bgImg = bgImage;
     }

@@ -6,7 +6,7 @@ const ART = (() => {
   const BROWN = '#c98e63';
   const BROWN_DARK = '#7a4a33';
   const BLUSH = 'rgba(247,150,160,.55)';
-  const ASSET_V = '24';
+  const ASSET_V = '25';
 
   // 豆包生成的角色素材（白底贴纸卡，按服装分目录）
   const OUTFIT_IDS = ['travel', 'cn', 'jp', 'fr', 'gb', 'au', 'gr', 'world'];
@@ -1027,23 +1027,20 @@ const ART = (() => {
     c.width = 1280; c.height = 720;
     const g = c.getContext('2d');
     g.lineJoin = 'round'; g.lineCap = 'round';
-    g.strokeStyle = '#fff'; g.lineWidth = 44;
+    g.strokeStyle = '#fff'; g.lineWidth = 60;
     traceStonePath(g, points); g.stroke();
     g.globalCompositeOperation = 'source-atop';
 
-    const grad = g.createLinearGradient(0, 0, 0, 720);
-    grad.addColorStop(0, '#f2d9a4');
-    grad.addColorStop(.55, '#e8c98d');
-    grad.addColorStop(1, '#d8b476');
-    g.fillStyle = grad; g.fillRect(0, 0, 1280, 720);
-
-    // 砖缝
-    g.strokeStyle = 'rgba(150,105,60,.22)'; g.lineWidth = 1.4;
-    for (let y = 0; y <= 720; y += 24) {
-      g.beginPath(); g.moveTo(0, y); g.lineTo(1280, y); g.stroke();
-      const off = (Math.floor(y / 24) % 2) * 19;
-      for (let x = -off; x < 1280; x += 38) {
-        g.beginPath(); g.moveTo(x, y); g.lineTo(x, y + 24); g.stroke();
+    // 一块块 30px 石砖，模块化铺设
+    g.fillStyle = '#c7a776'; g.fillRect(0, 0, 1280, 720);
+    const tiles = ['#e8d0a0', '#e8d0a0', '#e2c894', '#e8d0a0'];
+    for (let row = 0; row * 30 < 720; row++) {
+      for (let col = 0; col * 30 < 1280; col++) {
+        const x = col * 30, y = row * 30;
+        g.fillStyle = tiles[(row * 3 + col * 5) % tiles.length];
+        g.beginPath(); g.roundRect(x + 1.5, y + 1.5, 27, 27, 4); g.fill();
+        g.strokeStyle = 'rgba(255,250,230,.18)'; g.lineWidth = 1;
+        g.beginPath(); g.moveTo(x + 4, y + 3); g.lineTo(x + 26, y + 3); g.stroke();
       }
     }
 
@@ -1073,10 +1070,11 @@ const ART = (() => {
       for (let i = 1; i < points.length; i++) ctx.lineTo(points[i][0], points[i][1]);
     };
     ctx.save(); ctx.translate(0, 6);
-    trace(); ctx.strokeStyle = 'rgba(57,39,27,.22)'; ctx.lineWidth = 60; ctx.stroke();
+    trace(); ctx.strokeStyle = 'rgba(57,39,27,.22)'; ctx.lineWidth = 72; ctx.stroke();
     ctx.restore();
-    trace(); ctx.strokeStyle = '#7a5a3c'; ctx.lineWidth = 58; ctx.stroke();
-    trace(); ctx.strokeStyle = '#c49b63'; ctx.lineWidth = 50; ctx.stroke();
+    trace(); ctx.strokeStyle = '#6b4f36'; ctx.lineWidth = 70; ctx.stroke();
+    trace(); ctx.setLineDash([26, 4]); ctx.strokeStyle = '#d0a56c'; ctx.lineWidth = 64; ctx.stroke();
+    ctx.setLineDash([]);
     ctx.drawImage(tex, 0, 0);
     ctx.restore();
   }
@@ -1084,25 +1082,19 @@ const ART = (() => {
   function drawPad(ctx, x, y, opts = {}) {
     ctx.save();
     ctx.translate(x, y);
-    ctx.save(); ctx.globalAlpha = .2; ctx.fillStyle = '#3b241c';
-    ctx.beginPath(); ctx.ellipse(0, 13, 34, 10, 0, 0, Math.PI * 2); ctx.fill(); ctx.restore();
-    // 石鼓底座
-    ctx.beginPath(); ctx.ellipse(0, 8, 33, 15, 0, 0, Math.PI * 2);
-    ctx.fillStyle = '#c49a68'; ctx.fill(); ctx.strokeStyle = INK; ctx.lineWidth = 3; ctx.stroke();
-    ctx.beginPath(); ctx.ellipse(0, 1, 33, 14, 0, 0, Math.PI * 2);
-    ctx.fillStyle = '#f3ddb2'; ctx.fill(); ctx.stroke();
-    // 红漆腰带
-    ctx.beginPath(); ctx.ellipse(0, 5, 29, 11.5, 0, 0, Math.PI * 2);
-    ctx.strokeStyle = '#d95d4f'; ctx.lineWidth = 6; ctx.stroke();
-    // 内圈 + 星星
-    ctx.beginPath(); ctx.ellipse(0, -2, 21, 8.5, 0, 0, Math.PI * 2);
-    ctx.fillStyle = opts.highlight ? '#ffe9b8' : '#fff1d2'; ctx.fill();
-    ctx.strokeStyle = 'rgba(75,43,32,.6)'; ctx.lineWidth = 2; ctx.stroke();
-    star(ctx, 0, -3, 5, opts.highlight ? '#f2b84b' : '#d99a2b', INK, 1.4);
-    // 青苔
-    ctx.globalAlpha = .75; ctx.fillStyle = '#7bc8a4';
-    ctx.beginPath(); ctx.ellipse(-23, 3, 6, 3.5, -.4, 0, Math.PI * 2); ctx.fill();
-    ctx.beginPath(); ctx.ellipse(22, 6, 4.5, 2.8, .5, 0, Math.PI * 2); ctx.fill();
+    ctx.globalAlpha = .55;
+    ctx.save(); ctx.globalAlpha = .12; ctx.fillStyle = '#3b241c';
+    ctx.beginPath(); ctx.ellipse(0, 10, 30, 8, 0, 0, Math.PI * 2); ctx.fill(); ctx.restore();
+    ctx.beginPath(); ctx.ellipse(0, 3, 27, 13, 0, 0, Math.PI * 2);
+    ctx.fillStyle = '#efdcb8'; ctx.fill();
+    ctx.strokeStyle = 'rgba(75,43,32,.38)'; ctx.lineWidth = 2; ctx.stroke();
+    ctx.beginPath(); ctx.ellipse(0, 0, 22, 10, 0, 0, Math.PI * 2);
+    ctx.strokeStyle = 'rgba(120,90,60,.5)'; ctx.lineWidth = 2; ctx.stroke();
+    ctx.globalAlpha = .55;
+    star(ctx, 0, -1, 4, opts.highlight ? '#f2b84b' : '#a88c60', null, 0);
+    ctx.globalAlpha = .45; ctx.fillStyle = '#7bc8a4';
+    ctx.beginPath(); ctx.ellipse(-18, 4, 5, 3, -.4, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(17, 6, 4, 2.5, .5, 0, Math.PI * 2); ctx.fill();
     ctx.restore();
   }
 
@@ -1139,6 +1131,39 @@ const ART = (() => {
       ctx.beginPath(); ctx.ellipse(0, -20, 8, 4, 0, 0, Math.PI * 2);
       ctx.fillStyle = '#d95d4f'; ctx.fill(); ctx.strokeStyle = INK; ctx.lineWidth = 2; ctx.stroke();
       ctx.fillStyle = '#f6cf6d'; ctx.fillRect(-2, -34, 4, 4);
+    }
+    ctx.restore();
+  }
+
+  function drawSkillIcon(ctx, type, x, y, s) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+    if (type === 'freeze') {
+      ctx.strokeStyle = '#5aa9c9'; ctx.lineWidth = 2.4;
+      for (let i = 0; i < 3; i++) {
+        const a = i * Math.PI / 3;
+        ctx.beginPath();
+        ctx.moveTo(-Math.cos(a) * s, -Math.sin(a) * s);
+        ctx.lineTo(Math.cos(a) * s, Math.sin(a) * s);
+        ctx.stroke();
+        for (const sign of [-1, 1]) {
+          const px = Math.cos(a) * s * .55 * sign, py = Math.sin(a) * s * .55 * sign;
+          ctx.beginPath();
+          ctx.moveTo(px, py);
+          ctx.lineTo(px - Math.sin(a) * 4, py + Math.cos(a) * 4);
+          ctx.moveTo(px, py);
+          ctx.lineTo(px + Math.sin(a) * 4, py - Math.cos(a) * 4);
+          ctx.stroke();
+        }
+      }
+      circle(ctx, 0, 0, 3, '#bde8f5', '#4b2b20', 1.5);
+    } else {
+      circle(ctx, 0, 2, s * .75, '#4b2b20', '#2e1a13', 2);
+      ctx.fillStyle = '#f6cf6d';
+      star(ctx, 3, -s * .65, 3, '#f6cf6d', '#4b2b20', 1);
+      ctx.strokeStyle = '#8a5a20'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(4, -s * .35); ctx.quadraticCurveTo(9, -s * .8, 12, -s * 1.1); ctx.stroke();
     }
     ctx.restore();
   }
@@ -1280,7 +1305,7 @@ const ART = (() => {
     INK, WHITE, BROWN,
     circle, ellipse, rr, capsule, poly, star, heart, coin, paw,
     drawBear, drawHead, whenTravelReady, whenOutfitReady, isOutfitReady, whenTowersReady, drawSeagull, drawTower, drawProp, drawEnemy,
-    drawBackground, drawPath, drawStonePath, drawMiniPath, drawSlot, drawPad, drawDecor, drawBase, drawLandmark,
+    drawBackground, drawPath, drawStonePath, drawMiniPath, drawSlot, drawPad, drawDecor, drawSkillIcon, drawBase, drawLandmark,
     drawCoinPop, drawHit, drawLeaf
   };
 })();

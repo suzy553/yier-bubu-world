@@ -128,17 +128,12 @@ const LEVELS = [
     id:'cn1', name:'长城脚下', sub:'第 1 关 · 飞镖教学', chapter:'中国',
     path:[[-50,460],[160,460],[160,240],[340,240],[340,520],[520,520],[520,200],[700,200],[700,480],[880,480],[880,260],[1040,260],[1040,460],[1180,460]],
     slots:[[120,420],[320,420],[330,320],[430,170],[620,320],[620,420],[700,150],[920,320],[920,420],[1160,290],[1160,490],[1000,560]],
-    pads:[[100,340],[260,150],[440,360],[620,320],[800,340],[960,380]],
+    pads:[[100,340],[440,360],[800,340],[960,380]],
     decor:[
-      {type:'flower',x:80,y:360},{type:'bush',x:220,y:545},{type:'rock',x:300,y:90},
-      {type:'flower',x:420,y:340},{type:'lantern',x:520,y:90},{type:'bush',x:760,y:360},
-      {type:'flower',x:900,y:140},{type:'rock',x:1080,y:240},{type:'flower',x:1120,y:560},
-      {type:'bush',x:650,y:560},
-      {type:'flower',x:60,y:220},{type:'flower',x:200,y:120},{type:'flower',x:360,y:80},
-      {type:'flower',x:560,y:420},{type:'flower',x:760,y:540},{type:'flower',x:1040,y:560},
-      {type:'flower',x:1120,y:200},{type:'flower',x:940,y:300},
-      {type:'bush',x:160,y:555},{type:'bush',x:500,y:80},{type:'bush',x:1000,y:80},{type:'bush',x:280,y:555},
-      {type:'rock',x:700,y:80},{type:'rock',x:1100,y:520},{type:'lantern',x:1000,y:80}
+      {type:'flower',x:60,y:300},{type:'flower',x:92,y:332},{type:'bush',x:48,y:362},{type:'rock',x:40,y:260},
+      {type:'bush',x:220,y:100},{type:'rock',x:260,y:80},{type:'lantern',x:300,y:120},
+      {type:'flower',x:560,y:540},{type:'flower',x:600,y:555},{type:'bush',x:640,y:540},
+      {type:'flower',x:1100,y:160},{type:'rock',x:1130,y:200},{type:'lantern',x:1160,y:150}
     ],
     waves:[
       { groups:[{enemy:'fuzz',count:8,gap:0.85}], reward:28 },

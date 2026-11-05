@@ -146,7 +146,7 @@
     if (wardrobeRaf) { cancelAnimationFrame(wardrobeRaf); wardrobeRaf = 0; }
     if (id === 'screen-menu') {
       const outfit = currentOutfit();
-      $('menu-place').textContent = `第一站 · 中国 · 当前穿搭：${outfit.name} · v24`;
+      $('menu-place').textContent = `第一站 · 中国 · 当前穿搭：${outfit.name} · v25`;
       ART.whenOutfitReady(outfit.id, () => {
         if (currentScreen === 'screen-menu') startMenuLoop();
       });
@@ -489,6 +489,7 @@
       onSfx: n => Sound.sfx(n)
     });
     buildBuildBar();
+    drawSkillIcons();
     ART.whenTowersReady(() => {
       if (currentScreen !== 'screen-game') return;
       buildBuildBar();
@@ -584,6 +585,21 @@
       ART.drawTower(ctx, 26, 36, .52, id, 1, { angle: -0.5 });
       el.addEventListener('click', () => GAME.selectBuild(id));
     });
+  }
+
+  function drawSkillIcons() {
+    for (const type of ['freeze', 'bomb']) {
+      const btn = $('skill-' + type);
+      if (!btn) continue;
+      const canvas = btn.querySelector('canvas');
+      if (!canvas) continue;
+      const ctx = canvas.getContext('2d');
+      const dpr = Math.min(2, window.devicePixelRatio || 1);
+      canvas.width = 28 * dpr; canvas.height = 28 * dpr;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.clearRect(0, 0, 28, 28);
+      ART.drawSkillIcon(ctx, type, 14, 14, 10);
+    }
   }
 
   function updateHUD(s) {
@@ -979,7 +995,7 @@
     fetch(`version.json?t=${Date.now()}`, { cache: 'no-store' })
       .then(r => r.json())
       .then(v => {
-        if (v.version && String(v.version) !== '24') {
+        if (v.version && String(v.version) !== '25') {
           const target = `v${v.version}.html`;
           if (!location.pathname.endsWith(target)) location.replace(target);
         }
