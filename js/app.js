@@ -151,11 +151,24 @@
 
   function resize() {
     const w = window.innerWidth, h = window.innerHeight;
-    const scale = Math.min(w / 1280, h / 720);
+    const coarse = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
+    const smallLandscape = w <= 1100 && h <= 620 && w > h;
+    const mobile = coarse || smallLandscape;
+    let scale = Math.min(w / 1280, h / 720);
+    let safeY = 0;
+    if (mobile && w > h) {
+      const cover = Math.max(w / 1280, h / 720);
+      if (cover > scale) {
+        scale = cover;
+        safeY = Math.max(0, (720 * scale - h) / (2 * scale));
+      }
+    }
+    stage.style.setProperty('--safe-y', `${safeY}px`);
     stage.style.transform = `translate(${(w - 1280 * scale) / 2}px, ${(h - 720 * scale) / 2}px) scale(${scale})`;
   }
   window.addEventListener('resize', resize);
   window.addEventListener('orientationchange', () => setTimeout(resize, 120));
+  if (window.visualViewport) window.visualViewport.addEventListener('resize', resize);
   resize();
 
   let toastTimer = 0;
@@ -470,6 +483,16 @@
       const s = GAME.getS(); if (!s) return;
       GAME.setSpeed(s.speed === 1 ? 2 : 1);
       Sound.sfx('click');
+    });
+    $('btn-fullscreen').addEventListener('click', async () => {
+      try {
+        if (!document.fullscreenElement) await document.documentElement.requestFullscreen();
+        else await document.exitFullscreen();
+        Sound.sfx('click');
+        setTimeout(resize, 120);
+      } catch (e) {
+        toast('这个浏览器不支持全屏，可以试着横屏玩。');
+      }
     });
     $('btn-pause').addEventListener('click', () => {
       const s = GAME.getS(); if (!s) return;
@@ -927,8 +950,23 @@
     c.width = 220; c.height = 150;
     lb.appendChild(c);
     const ctx = c.getContext('2d');
-    ART.drawBear(ctx, 80, 140, .55, { who: 'yier', outfit: OUTFITS[0], expression: 'happy' });
-    ART.drawBear(ctx, 150, 140, .55, { who: 'bubu', outfit: OUTFITS[0], expression: 'happy' });
+    function drawLoadingPlaceholder() {
+      ctx.clearRect(0, 0, 220, 150);
+      ctx.fillStyle = '#fff8ec'; ctx.strokeStyle = '#4b2b20'; ctx.lineWidth = 3;
+      for (const x of [48, 118]) {
+        ctx.beginPath(); ctx.roundRect(x, 24, 54, 104, 14); ctx.fill(); ctx.stroke();
+        ctx.fillStyle = '#e8d7c0';
+        ctx.beginPath(); ctx.arc(x + 27, 58, 10, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(x + 27, 96, 15, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#fff8ec';
+      }
+    }
+    function drawLoadingBears() {
+      ctx.clearRect(0, 0, 220, 150);
+      ART.drawBear(ctx, 80, 140, .55, { who: 'yier', outfit: OUTFITS[0], expression: 'happy' });
+      ART.drawBear(ctx, 150, 140, .55, { who: 'bubu', outfit: OUTFITS[0], expression: 'happy' });
+    }
+    drawLoadingPlaceholder();
 
     const dbgOutfit = params.get('outfit');
     if (dbgOutfit && OUTFITS.some(o => o.id === dbgOutfit)) {
@@ -938,6 +976,7 @@
     }
 
     ART.whenTravelReady(() => {
+      drawLoadingBears();
       setTimeout(() => {
         show('screen-menu');
         const q = params.get('screen');
