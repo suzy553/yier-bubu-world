@@ -442,9 +442,8 @@
       onSfx: n => Sound.sfx(n)
     });
     buildBuildBar();
-    $('btn-wave').addEventListener('click', () => { hideTip(); GAME.startWave(); });
-    $('btn-upgrade').addEventListener('click', () => GAME.upgrade());
-    $('btn-sell').addEventListener('click', () => GAME.sell());
+    $('wave-action').style.display = 'none';
+    $('btn-upgrade').addEventListener('click', () => GAME.upgrade());    $('btn-sell').addEventListener('click', () => GAME.sell());
     $('panel-close').addEventListener('click', () => {
       GAME.deselect();
       hideTowerPanel();
@@ -476,8 +475,8 @@
       if (e.key === ' ') {
         e.preventDefault();
         if (s.over) return;
-        if (s.phase === 'prepare') { hideTip(); GAME.startWave(); }
-        else { GAME.pause(!s.paused); $('pause-overlay').classList.toggle('show', s.paused); }
+        GAME.pause(!s.paused);
+        $('pause-overlay').classList.toggle('show', s.paused);
       } else if (['1','2','3','4'].includes(e.key)) {
         GAME.selectBuild(TOWER_ORDER[Number(e.key) - 1]);
       } else if (e.key === 'Escape') {
@@ -523,13 +522,16 @@
 
     let waveText = '准备中';
     if (s.over) waveText = s.phase === 'won' ? '通关！' : '失败';
-    else if (s.phase === 'prepare') waveText = s.wave === 0 ? '准备中' : `第 ${s.wave + 1} 波准备`;
-    else waveText = `第 ${s.wave} / ${s.totalWaves} 波`;
+    else if (s.phase === 'prepare') {
+      const sec = Math.max(0, Math.ceil(s.prepareT || 0));
+      waveText = s.wave === 0 ? `第 1 波 · ${sec}s` : `第 ${s.wave + 1} 波 · ${sec}s`;
+    } else waveText = `第 ${s.wave} / ${s.totalWaves} 波`;
     $('hud-wave').textContent = waveText;
 
     const dots = $('hud-wave-dots');
+    const current = s.phase === 'prepare' ? s.wave : s.wave - 1;
     dots.innerHTML = Array.from({ length: s.totalWaves }, (_, i) => {
-      const cls = i < s.wave - 1 ? 'done' : i === s.wave - 1 ? 'now' : '';
+      const cls = i < current ? 'done' : i === current ? 'now' : '';
       return `<i class="${cls}"></i>`;
     }).join('');
 
@@ -586,18 +588,9 @@
       hideTowerPanel();
     }
 
-    // 波次按钮
-    const btn = $('btn-wave');
+    // 波次按钮：自动波次，永远隐藏
     const action = $('wave-action');
-    if (s.over) {
-      action.style.display = 'none';
-    } else {
-      action.style.display = 'block';
-      btn.disabled = !s.canStartWave;
-      if (s.wave >= s.totalWaves) btn.textContent = '最后一波';
-      else if (s.wave === 0) btn.textContent = '开始第 1 波';
-      else btn.textContent = `开始第 ${s.wave + 1} 波`;
-    }
+    if (action) action.style.display = 'none';
 
     // 提示
     if (s.over) hideTip();

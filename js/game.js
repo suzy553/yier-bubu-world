@@ -121,6 +121,7 @@ const GAME = (() => {
       maxLives: level.lives,
       waveIndex: -1,
       phase: 'prepare',
+      prepareT: 5,
       queue: [],
       queueIndex: 0,
       waveTime: 0,
@@ -251,6 +252,7 @@ const GAME = (() => {
     if (!wave) return;
     S.waveIndex++;
     S.phase = 'wave';
+    S.prepareT = 0;
     S.waveTime = 0;
     S.queue = [];
     S.queueIndex = 0;
@@ -394,7 +396,11 @@ const GAME = (() => {
     if (S.bannerT > 0) S.bannerT -= dt;
     if (S.shakeT > 0) S.shakeT -= dt;
 
-    // 波次
+    // 波次：准备倒计时结束自动开下一波，不需要手动点按钮
+    if (S.phase === 'prepare') {
+      S.prepareT -= dt;
+      if (S.prepareT <= 0) startWave();
+    }
     if (S.phase === 'wave') {
       S.waveTime += step;
       while (S.queueIndex < S.queue.length && S.queue[S.queueIndex].time <= S.waveTime) {
@@ -406,6 +412,7 @@ const GAME = (() => {
           end(true);
         } else {
           S.phase = 'prepare';
+          S.prepareT = 3;
           S.bannerT = 1.4;
           S.coins += 20;
           toast('这一波清空啦，+20 熊熊币');
@@ -722,6 +729,7 @@ const GAME = (() => {
       wave: S.waveIndex + 1,
       totalWaves: S.level.waves.length,
       phase: S.phase,
+      prepareT: Math.max(0, S.prepareT),
       over: S.over,
       paused: S.paused,
       speed: S.speed,
