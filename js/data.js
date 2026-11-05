@@ -93,10 +93,31 @@ const TOWERS = {
 
 const TOWER_ORDER = ['dart','sling','honey','camera'];
 
+const BRANCHES = {
+  dart: [
+    { id:'rapid', name:'连射', desc:'攻速 +40%，单发伤害 -25%', mods:{ rateMul:1.4, damageMul:.75 } },
+    { id:'heavy', name:'重镖', desc:'伤害 +50%，射程 +15，攻速 -20%', mods:{ damageMul:1.5, rangeAdd:15, rateMul:.8 } }
+  ],
+  sling: [
+    { id:'scatter', name:'散石', desc:'命中后对 60 范围造成 60% 溅射伤害', mods:{ splash:60, damageMul:.8 } },
+    { id:'heavy', name:'重弹', desc:'伤害 +40%，射程 +20', mods:{ damageMul:1.4, rangeAdd:20 } }
+  ],
+  honey: [
+    { id:'thick', name:'浓蜜', desc:'减速 +15%，持续时间 +0.8 秒', mods:{ slowAdd:.15, slowDurAdd:.8 } },
+    { id:'mist', name:'蜜雾', desc:'范围 +35，伤害 +4', mods:{ rangeAdd:35, damageAdd:4 } }
+  ],
+  camera: [
+    { id:'flash', name:'强闪', desc:'眩晕 +0.6 秒，范围 +15', mods:{ stunAdd:.6, aoeAdd:15 } },
+    { id:'focus', name:'聚焦', desc:'伤害 +80%，范围 -10', mods:{ damageMul:1.8, aoeAdd:-10 } }
+  ]
+};
+
 const ENEMIES = {
   fuzz: { id:'fuzz', name:'绒球怪', hp:48, speed:38, reward:6, radius:17, color:'#7bc8a4', armor:0 },
   dango: { id:'dango', name:'快跑团子', hp:42, speed:76, reward:7, radius:15, color:'#f2a7bb', armor:0 },
   can: { id:'can', name:'铁罐怪', hp:200, speed:28, reward:14, radius:21, color:'#9fb3c8', armor:2 },
+  shield: { id:'shield', name:'护盾怪', hp:160, speed:26, reward:14, radius:20, color:'#7d94a8', armor:0, shield:55 },
+  healer: { id:'healer', name:'治疗怪', hp:90, speed:32, reward:12, radius:18, color:'#f2a7bb', armor:0, heal:0.12 },
   pudding: { id:'pudding', name:'布丁怪', hp:100, speed:36, reward:10, radius:19, color:'#f6c453', armor:0, split:'mini' },
   mini: { id:'mini', name:'小布丁', hp:24, speed:58, reward:3, radius:11, color:'#f9d77e', armor:0 },
   boss: { id:'boss', name:'灯笼大魔王', hp:2200, speed:22, reward:150, radius:46, color:'#d94a3d', armor:3, boss:true }
@@ -145,8 +166,8 @@ const LEVELS = [
     waves:[
       { groups:[{enemy:'fuzz',count:12,gap:0.6},{enemy:'can',count:1,gap:1.3}], reward:34 },
       { groups:[{enemy:'can',count:2,gap:1.1},{enemy:'dango',count:8,gap:0.5}], reward:40 },
-      { groups:[{enemy:'fuzz',count:16,gap:0.45},{enemy:'can',count:2,gap:1.0}], reward:44 },
-      { groups:[{enemy:'can',count:3,gap:0.9},{enemy:'dango',count:12,gap:0.4}], reward:52 }
+      { groups:[{enemy:'fuzz',count:16,gap:0.45},{enemy:'can',count:2,gap:1.0},{enemy:'shield',count:2,gap:1.2}], reward:44 },
+      { groups:[{enemy:'can',count:3,gap:0.9},{enemy:'dango',count:12,gap:0.4},{enemy:'healer',count:1,gap:1.5}], reward:52 }
     ],
     coins:320, lives:10, towers:['dart','sling','honey'], reward:160, tint:'rgba(226,238,255,.44)',
     props:[
@@ -162,8 +183,8 @@ const LEVELS = [
     slots:[[90,300],[320,300],[320,480],[380,80],[580,300],[580,420],[640,80],[860,300],[860,520],[1040,300],[1040,520],[1160,240]],
     waves:[
       { groups:[{enemy:'pudding',count:4,gap:1.0},{enemy:'fuzz',count:10,gap:0.55}], reward:36 },
-      { groups:[{enemy:'dango',count:12,gap:0.45},{enemy:'pudding',count:4,gap:1.0}], reward:42 },
-      { groups:[{enemy:'can',count:4,gap:1.1},{enemy:'pudding',count:5,gap:0.8}], reward:46 },
+      { groups:[{enemy:'dango',count:12,gap:0.45},{enemy:'pudding',count:4,gap:1.0},{enemy:'healer',count:1,gap:1.5}], reward:42 },
+      { groups:[{enemy:'can',count:4,gap:1.1},{enemy:'pudding',count:5,gap:0.8},{enemy:'shield',count:2,gap:1.2}], reward:46 },
       { groups:[{enemy:'fuzz',count:18,gap:0.4},{enemy:'pudding',count:5,gap:0.75},{enemy:'dango',count:10,gap:0.4}], reward:56 }
     ],
     coins:420, lives:10, towers:['dart','sling','honey','camera'], reward:180, tint:'rgba(255,214,170,.44)',
@@ -180,7 +201,7 @@ const LEVELS = [
     slots:[[80,380],[280,380],[280,260],[360,80],[600,260],[600,380],[720,80],[920,260],[920,380],[1040,260],[1040,420],[1200,260]],
     waves:[
       { groups:[{enemy:'fuzz',count:14,gap:0.45},{enemy:'dango',count:10,gap:0.4}], reward:40 },
-      { groups:[{enemy:'can',count:6,gap:0.9},{enemy:'pudding',count:8,gap:0.7}], reward:50 },
+      { groups:[{enemy:'can',count:6,gap:0.9},{enemy:'pudding',count:8,gap:0.7},{enemy:'shield',count:2,gap:1.2},{enemy:'healer',count:1,gap:1.5}], reward:50 },
       { groups:[{enemy:'boss',count:1,gap:1},{enemy:'fuzz',count:10,gap:0.35},{enemy:'dango',count:8,gap:0.4}], reward:120 }
     ],
     coins:400, lives:12, towers:['dart','sling','honey','camera'], reward:300, tint:'rgba(255,196,150,.48)', boss:true,

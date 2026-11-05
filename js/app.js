@@ -422,7 +422,7 @@
       return `<div class="stamp-card ${got ? '' : 'off'}">${got ? '中国<br>印章' : '未收集'}</div>`;
     }).join('');
     const mg = $('monster-grid');
-    const types = ['fuzz', 'dango', 'can', 'pudding', 'boss'];
+    const types = ['fuzz', 'dango', 'can', 'pudding', 'shield', 'healer', 'boss'];
     mg.innerHTML = types.map(t => `
       <div class="monster-card">
         <canvas width="56" height="56"></canvas>
@@ -603,12 +603,30 @@
       if (st.stun) stats += `<span>眩晕 ${st.stun}s</span>`;
       $('panel-stats').innerHTML = stats;
       const up = $('btn-upgrade');
-      if (sel.level >= 3) {
-        up.textContent = '已满级';
+      if (sel.branch) {
+        up.textContent = `已专精 · ${sel.branchName}`;
+        up.disabled = true;
+      } else if (sel.level >= 3) {
+        up.textContent = '3 级 · 选专精';
         up.disabled = true;
       } else {
         up.textContent = `升级 · ${sel.upgradeCost}`;
         up.disabled = s.coins < sel.upgradeCost;
+      }
+      const box = $('branch-box');
+      if (sel.branches && sel.branches.length) {
+        box.innerHTML = '<div class="branch-title">3 级专精 · 二选一</div>' +
+          sel.branches.map(b => `<button class="branch-btn" data-branch="${b.id}"><b>${b.name}</b><small>${b.desc}</small></button>`).join('');
+        box.querySelectorAll('.branch-btn').forEach(btn => {
+          btn.addEventListener('click', () => {
+            GAME.chooseBranch(btn.dataset.branch);
+            updateHUD(GAME.snapshot());
+          });
+        });
+      } else if (sel.branch) {
+        box.innerHTML = `<div class="branch-chosen">专精：${sel.branchName}</div>`;
+      } else {
+        box.innerHTML = '';
       }
       $('btn-sell').textContent = `拆除 · +${sel.sell}`;
       const icon = $('panel-icon');

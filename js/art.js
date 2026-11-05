@@ -38,7 +38,7 @@ const ART = (() => {
     ]).then(cb);
   }
   const monsterSprites = {};
-  for (const id of ['fuzz', 'dango', 'can', 'pudding', 'boss']) {
+  for (const id of ['fuzz', 'dango', 'can', 'pudding', 'boss', 'shield', 'healer']) {
     loadSprite(`assets/monsters/${id}.png`, monsterSprites, id);
   }
   const towerSprites = {};
@@ -753,6 +753,26 @@ const ART = (() => {
 
   /* ---------------- 怪物 ---------------- */
   function drawEnemyStatus(ctx, e, opts) {
+    if (e.shieldHp > 0) {
+      ctx.save();
+      ctx.globalAlpha = .75;
+      ctx.strokeStyle = '#8ecae6';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(0, -e.radius * .45, e.radius * 1.18, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.restore();
+    }
+    if (e.type === 'healer') {
+      ctx.save();
+      ctx.strokeStyle = '#7bc8a4';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(-5, -e.radius - 18); ctx.lineTo(5, -e.radius - 18);
+      ctx.moveTo(0, -e.radius - 23); ctx.lineTo(0, -e.radius - 13);
+      ctx.stroke();
+      ctx.restore();
+    }
     if (opts.slow) {
       ctx.globalAlpha = .35; ctx.fillStyle = '#8ecae6';
       circle(ctx, 0, -e.radius - 10, 5, '#8ecae6', null, 0);

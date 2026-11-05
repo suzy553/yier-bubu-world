@@ -234,7 +234,7 @@ const GAME = (() => {
     const t = S && S.selectedTower;
     if (!t) return;
     const def = TOWERS[t.type];
-    if (t.level >= 3) { toast('已经满级啦。'); return; }
+    if (t.level >= 3) { toast(t.branch ? '已经专精啦。' : '已经 3 级，选一个专精吧。'); return; }
     const cost = def.levels[t.level - 1].cost;
     if (S.coins < cost) { toast('熊熊币不够升级。'); return; }
     S.coins -= cost;
@@ -242,6 +242,19 @@ const GAME = (() => {
     t.level++;
     addEffect('upgrade', t.slot.x, t.slot.y - 28, 0, .5);
     sfx('upgrade');
+    emit(true);
+  }
+
+  function chooseBranch(id) {
+    const t = S && S.selectedTower;
+    if (!t || t.level < 3 || t.branch) return;
+    const def = (BRANCHES[t.type] || []).find(b => b.id === id);
+    if (!def) return;
+    t.branch = def.id;
+    t.branchName = def.name;
+    addEffect('upgrade', t.slot.x, t.slot.y - 28, 0, .6);
+    sfx('upgrade');
+    toast(`${TOWERS[t.type].name} 专精：${def.name}`);
     emit(true);
   }
 
@@ -268,6 +281,8 @@ const GAME = (() => {
     if (n % 2 === 1) groups.push({ enemy: 'dango', count: 4 + n, gap: Math.max(.28, .6 - n * .012) });
     if (n % 3 === 2) groups.push({ enemy: 'can', count: 1 + Math.floor(n / 3), gap: 1.0 });
     if (n % 4 === 3) groups.push({ enemy: 'pudding', count: 2 + Math.floor(n / 4), gap: .85 });
+    if (n > 1 && n % 5 === 0) groups.push({ enemy: 'shield', count: 1 + Math.floor(n / 8), gap: 1.2 });
+    if (n > 2 && n % 7 === 0) groups.push({ enemy: 'healer', count: 1, gap: 1.5 });
     if (n > 0 && n % 5 === 0) groups.push({ enemy: 'boss', count: 1, gap: 1 });
     return { groups, hpScale: 1 + n * .12, reward: 20 + n * 2 };
   }
@@ -306,7 +321,7 @@ const GAME = (() => {
       if (sk.cd > 0) { toast(`冰冻还要 ${Math.ceil(sk.cd)} 秒`); return; }
       sk.cd = sk.max;
       for (const e of S.enemies) {
-        if (!e.prop && !e.dead) e.stun = Math.max(e.stun, 3);
+        if (!e.prop && !e.dead && e.shieldHp <= 0) e.stun = Math.max(e.stun, 3);
       }
       addEffect('flash', 640, 360, 0, .55);
       sfx('camera');
@@ -349,6 +364,9 @@ const GAME = (() => {
       radius: def.radius,
       armor: def.armor || 0,
       boss: !!def.boss,
+      shieldHp: def.shield || 0,
+      maxShield: def.shield || 0,
+      healT: 2 + Math.random() * 2,
       split: def.split || null,
       dist: 0,
       x: 0, y: 0,
@@ -395,6 +413,14 @@ const GAME = (() => {
     if (!e || e.dead) return;
     const buffed = S.damageBuffT > 0 ? S.damageBuffMult : 1;
     const dmg = Math.max(1, Math.round(amount * buffed) - (e.armor || 0));
+    if (e.shieldHp > 0) {
+      const absorbed = Math.min(e.shieldHp, dmg);
+      e.shieldHp -= absorbed;
+      e.hitT = .12;
+      addFloat(e.x + (Math.random() - .5) * 12, e.y - e.radius - 14, `-${Math.round(absorbed)}`, '#8ecae6');
+      if (e.shieldHp <= 0) addEffect('flash', e.x, e.y, 0, .35);
+      return;
+    }
     e.hp -= dmg;
     e.hitT = .12;
     addFloat(e.x + (Math.random() - .5) * 12, e.y - e.radius - 14, String(Math.round(dmg)));
@@ -489,7 +515,22 @@ const GAME = (() => {
   }
 
   function towerStat(t) {
-    return TOWERS[t.type].levels[t.level - 1];
+    const base = TOWERS[t.type].levels[t.level - 1];
+    if (!t.branch) return base;
+    const def = (BRANCHES[t.type] || []).find(b => b.id === t.branch);
+    if (!def) return base;
+    const m = def.mods || {};
+    return {
+      ...base,
+      damage: Math.round((base.damage + (m.damageAdd || 0)) * (m.damageMul || 1)),
+      range: base.range + (m.rangeAdd || 0),
+      rate: base.rate * (m.rateMul || 1),
+      slow: (base.slow || 0) + (m.slowAdd || 0),
+      slowDur: (base.slowDur || 0) + (m.slowDurAdd || 0),
+      stun: (base.stun || 0) + (m.stunAdd || 0),
+      aoe: (base.aoe || 0) + (m.aoeAdd || 0),
+      splash: m.splash || 0
+    };
   }
 
   function update(dt) {
@@ -538,6 +579,24 @@ const GAME = (() => {
       if (e.dead) continue;
       e.hitT = Math.max(0, e.hitT - step);
       if (e.prop) continue;
+      if (e.type === 'healer') {
+        e.healT -= step;
+        if (e.healT <= 0) {
+          e.healT = 4;
+          let healed = false;
+          for (const o of S.enemies) {
+            if (o === e || o.dead || o.prop || o.hp >= o.maxHp) continue;
+            if (dist2(e.x, e.y, o.x, o.y) <= 120 * 120) {
+              o.hp = Math.min(o.maxHp, o.hp + o.maxHp * .12);
+              healed = true;
+            }
+          }
+          if (healed) {
+            addEffect('flash', e.x, e.y, 0, .4, { r: 120 });
+            addFloat(e.x, e.y - 40, '+治疗', '#7bc8a4');
+          }
+        }
+      }
       if (e.stun > 0) { e.stun -= step; }
       if (e.slowT > 0) { e.slowT -= step; } else { e.slow = 0; }
       const sp = e.stun > 0 ? 0 : e.speed * (1 - e.slow);
@@ -586,6 +645,15 @@ const GAME = (() => {
         p.dead = true;
         if (target && !target.dead) {
           damage(target, p.damage, 'projectile');
+          if (p.splash) {
+            for (const e of S.enemies.slice()) {
+              if (e === target || e.dead || e.prop) continue;
+              if (dist2(p.tx, p.ty, e.x, e.y) <= p.splash * p.splash) {
+                damage(e, p.damage * .6, 'splash');
+              }
+            }
+            addEffect('flash', p.tx, p.ty, 0, .3, { r: p.splash });
+          }
         }
         addEffect('hit', p.tx, p.ty, 0, .3, { color: p.color });
       } else {
@@ -619,8 +687,10 @@ const GAME = (() => {
       for (const e of S.enemies.slice()) {
         if (e.dead) continue;
         if (dist2(t.slot.x, t.slot.y, e.x, e.y) <= st.range * st.range) {
-          e.slow = Math.max(e.slow, st.slow);
-          e.slowT = Math.max(e.slowT, st.slowDur);
+          if (e.shieldHp <= 0) {
+            e.slow = Math.max(e.slow, st.slow);
+            e.slowT = Math.max(e.slowT, st.slowDur);
+          }
           damage(e, st.damage, 'honey');
         }
       }
@@ -633,7 +703,7 @@ const GAME = (() => {
       for (const e of S.enemies.slice()) {
         if (e.dead) continue;
         if (dist2(cx, cy, e.x, e.y) <= (st.aoe || 60) ** 2) {
-          e.stun = Math.max(e.stun, st.stun);
+          if (e.shieldHp <= 0) e.stun = Math.max(e.stun, st.stun);
           damage(e, st.damage, 'camera');
         }
       }
@@ -645,6 +715,7 @@ const GAME = (() => {
       x: t.slot.x, y: t.slot.y - 28,
       tx: target.x, ty: target.y - 6,
       target, damage: st.damage,
+      splash: st.splash || 0,
       speed: t.type === 'dart' ? 760 : 560,
       type: t.type,
       angle: t.angle,
@@ -866,7 +937,10 @@ const GAME = (() => {
         max: 3,
         stats: st,
         upgradeCost: sel.level < 3 ? TOWERS[sel.type].levels[sel.level - 1].cost : 0,
-        sell: Math.floor(sel.spent * .6)
+        sell: Math.floor(sel.spent * .6),
+        branch: sel.branch || '',
+        branchName: sel.branchName || '',
+        branches: sel.level >= 3 && !sel.branch ? (BRANCHES[sel.type] || []) : []
       } : null,
       towers: Object.fromEntries(TOWER_ORDER.map(id => [id, {
         unlocked: S.level.towers.includes(id),
@@ -908,7 +982,7 @@ const GAME = (() => {
 
   return {
     init, start, stop, pause, setSpeed,
-    selectBuild, deselect, upgrade, sell, startWave, useSkill,
+    selectBuild, deselect, upgrade, sell, startWave, useSkill, chooseBranch,
     snapshot, getS, debugBuild, debugClearWave, debugFinish
   };
 })();
